@@ -1,0 +1,2010 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git 可视化沙盒</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, 'Segoe UI', 'Noto Sans CJK SC', sans-serif;
+  background: #fafafa;
+  color: #1a1a1a;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: 0.7rem 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+}
+.header h1 { font-size: 0.9rem; font-weight: 600; }
+.header .sub { font-size: 0.72rem; color: #888; }
+
+.main-layout {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Left panel */
+.left-panel {
+  width: 220px;
+  min-width: 220px;
+  border-right: 1px solid #e0e0e0;
+  padding: 1rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  overflow-y: auto;
+  background: #fcfcfc;
+}
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.panel-label {
+  font-size: 0.62rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.panel-branch {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+/* Sandwich display in left panel */
+.sandwich-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0.3rem 0;
+}
+.sandwich-bread {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  color: #92400e;
+}
+.sandwich-bread .bread-emoji { font-size: 1.2rem; }
+.sandwich-bread .bread-label { font-size: 0.68rem; color: #92400e; }
+
+.sandwich-layer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  margin: 1px 0;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  transition: background 0.1s;
+}
+.sandwich-layer:hover { background: #f8f8f8; }
+.sandwich-layer .layer-emoji { font-size: 1.1rem; }
+.sandwich-layer .layer-name { flex: 1; font-size: 0.72rem; color: #333; }
+.sandwich-layer .layer-actions {
+  display: flex;
+  gap: 3px;
+}
+.layer-btn {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.65rem;
+  color: #666;
+  transition: all 0.1s;
+}
+.layer-btn:hover { border-color: #999; color: #333; }
+.layer-btn.delete:hover { border-color: #d32f2f; color: #d32f2f; }
+
+.add-layer-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 8px;
+  margin: 2px 0;
+  background: #f0fdf4;
+  border: 1px dashed #86efac;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  color: #16a34a;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.add-layer-btn:hover { background: #dcfce7; border-color: #22c55e; }
+
+.diff-summary {
+  font-size: 0.72rem;
+  color: #666;
+  padding: 6px 8px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  margin-top: 6px;
+  line-height: 1.6;
+  font-family: 'SF Mono', 'Menlo', monospace;
+}
+.diff-summary .added { color: #16a34a; font-weight: 500; }
+.diff-summary .removed { color: #d32f2f; font-weight: 500; }
+.diff-summary .modified { color: #d97706; font-weight: 500; }
+
+.panel-message {
+  font-size: 0.72rem;
+  color: #555;
+  line-height: 1.4;
+  word-break: break-all;
+}
+.panel-sync {
+  font-size: 0.72rem;
+  color: #666;
+  display: flex;
+  gap: 0.5rem;
+}
+.panel-sync .ahead { color: #d97706; }
+.panel-sync .behind { color: #2563eb; }
+.panel-sync .synced { color: #16a34a; }
+
+/* Ingredient selector popover */
+.ingredient-selector {
+  position: fixed;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  z-index: 80;
+  display: none;
+}
+.ingredient-selector.show { display: block; }
+.ingredient-selector .ing-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  margin: 2px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.72rem;
+  border: 1px solid #e8e8e8;
+  transition: all 0.1s;
+}
+.ingredient-selector .ing-option:hover {
+  background: #f0f9ff;
+  border-color: #2563eb;
+}
+
+/* Right area */
+.graph-container {
+  flex: 1;
+  overflow: auto;
+  padding: 0.5rem;
+  min-height: 0;
+  position: relative;
+}
+.graph-container svg { display: block; }
+
+.controls {
+  border-top: 1px solid #e0e0e0;
+  padding: 0.7rem 1.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+.ctrl-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.ctrl-label {
+  font-size: 0.6rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ctrl-row {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btn {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: #fff;
+  color: #333;
+  font-family: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.1s;
+  white-space: nowrap;
+}
+.btn:hover { border-color: #666; }
+.btn:active { background: #f0f0f0; }
+.btn.active { background: #333; color: #fff; border-color: #333; }
+.btn.danger { color: #d32f2f; border-color: #e57373; }
+.btn.danger:hover { border-color: #d32f2f; }
+
+.branch-chip {
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  border: 1.5px solid transparent;
+}
+.branch-chip.current { border-color: #333; }
+
+.dialog-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.3);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.15s;
+}
+.dialog-overlay.show { opacity: 1; pointer-events: all; }
+.dialog {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1.2rem;
+  min-width: 300px;
+  max-width: 480px;
+}
+.dialog h3 { font-size: 0.85rem; margin-bottom: 0.7rem; }
+.dialog p { font-size: 0.75rem; color: #555; margin-bottom: 0.7rem; line-height: 1.4; }
+.dialog input {
+  width: 100%; padding: 0.45rem 0.6rem;
+  border-radius: 4px; border: 1px solid #ccc;
+  background: #fafafa; color: #1a1a1a;
+  font-family: inherit; font-size: 0.8rem;
+  margin-bottom: 0.7rem;
+}
+.dialog input:focus { outline: none; border-color: #333; }
+.dialog-btns { display: flex; gap: 0.4rem; justify-content: flex-end; flex-wrap: wrap; }
+
+.recipe-compare {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+  font-size: 0.8rem;
+}
+.recipe-compare .side {
+  flex: 1;
+}
+.recipe-compare .side-label {
+  font-size: 0.65rem;
+  color: #888;
+  margin-bottom: 0.4rem;
+  text-align: center;
+}
+.recipe-compare .sandwich-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  align-items: center;
+}
+.recipe-compare .preview-bread {
+  padding: 3px 12px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+.recipe-compare .preview-layer {
+  padding: 3px 10px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 3px;
+  font-size: 0.82rem;
+  background: #fff;
+  min-width: 60px;
+  text-align: center;
+}
+.recipe-compare .preview-layer.conflict {
+  border-color: #d32f2f;
+  background: #ffebee;
+}
+.recipe-compare .preview-layer.added {
+  border-color: #16a34a;
+  background: #f0fdf4;
+}
+.recipe-compare .preview-layer.removed {
+  border-color: #d32f2f;
+  background: #fef2f2;
+  text-decoration: line-through;
+}
+.recipe-compare .preview-layer.modified {
+  border-color: #d97706;
+  background: #fffbeb;
+}
+
+.toast {
+  position: fixed; bottom: 4rem; left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: #333; color: #fff;
+  padding: 0.4rem 0.9rem; border-radius: 4px;
+  font-size: 0.75rem; opacity: 0;
+  transition: all 0.2s; z-index: 90;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.error { background: #d32f2f; }
+.toast.warn { background: #e65100; }
+
+/* Hover tooltip card */
+.hover-card {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  padding: 0.7rem 0.8rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s;
+  min-width: 140px;
+  max-width: 220px;
+}
+.hover-card.visible {
+  opacity: 1;
+}
+.hover-card .hc-msg {
+  font-size: 0.72rem;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  word-break: break-all;
+}
+.hover-card .hc-sandwich {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  align-items: flex-start;
+  margin-bottom: 0.3rem;
+}
+.hover-card .hc-bread {
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  background: #fef3c7;
+  border-radius: 3px;
+  border: 1px solid #f59e0b;
+}
+.hover-card .hc-layer {
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+}
+.hover-card .hc-layer.diff-added {
+  background: #f0fdf4;
+  border-color: #22c55e;
+}
+.hover-card .hc-layer.diff-removed {
+  background: #fef2f2;
+  border-color: #ef4444;
+  text-decoration: line-through;
+}
+.hover-card .hc-layer.diff-modified {
+  background: #fffbeb;
+  border-color: #f59e0b;
+}
+.hover-card .hc-diff-label {
+  font-size: 0.58rem;
+  color: #888;
+  margin-top: 0.2rem;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Git 可视化沙盒</h1>
+  <span class="sub">小绿 + 小红 · 协作模拟 · 汉堡配方 · 全局视角</span>
+</div>
+
+<div class="main-layout">
+  <div class="left-panel" id="leftPanel">
+    <div class="panel-section">
+      <span class="panel-label">当前分支</span>
+      <span class="panel-branch" id="panelBranch">main</span>
+    </div>
+    <div class="panel-section">
+      <span class="panel-label">工作区汉堡</span>
+      <div class="sandwich-view" id="sandwichView"></div>
+      <div class="diff-summary" id="diffSummary"></div>
+    </div>
+    <div class="panel-section">
+      <span class="panel-label">最近提交</span>
+      <span class="panel-message" id="panelMessage">-</span>
+    </div>
+    <div class="panel-section">
+      <span class="panel-label">同步状态</span>
+      <div class="panel-sync" id="panelSync"></div>
+    </div>
+  </div>
+
+  <div class="graph-container" id="graphContainer">
+    <svg id="graphSvg"></svg>
+    <div class="hover-card" id="hoverCard">
+      <div class="hc-msg" id="hcMsg"></div>
+      <div class="hc-sandwich" id="hcSandwich"></div>
+      <div class="hc-diff-label" id="hcDiffLabel"></div>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="ctrl-group">
+    <span class="ctrl-label">第一步：拉取项目</span>
+    <div class="ctrl-row">
+      <button class="btn active" onclick="doClone()">克隆 clone</button>
+    </div>
+  </div>
+  <div class="ctrl-group">
+    <span class="ctrl-label">我的操作</span>
+    <div class="ctrl-row">
+      <button class="btn" onclick="doCommit()">存档 commit</button>
+      <button class="btn" onclick="doReset()">回退 reset</button>
+      <button class="btn" onclick="doPush()">推送 push</button>
+    </div>
+  </div>
+  <div class="ctrl-group">
+    <span class="ctrl-label">分支</span>
+    <div class="ctrl-row">
+      <button class="btn" onclick="showBranchDialog(true)">开分支 branch</button>
+      <button class="btn" onclick="showMergeDialog()">合并 merge</button>
+    </div>
+    <div class="ctrl-row" id="branchChips"></div>
+  </div>
+  <div class="ctrl-group">
+    <span class="ctrl-label">协作</span>
+    <div class="ctrl-row">
+      <button class="btn" onclick="doPull()">拉取 pull</button>
+      <button class="btn" onclick="doTeammateCommit()">小红提交</button>
+    </div>
+  </div>
+  <div class="ctrl-group">
+    <span class="ctrl-label" style="cursor:pointer;text-decoration:underline;" onclick="toggleAdvanced()">进阶 ▸</span>
+    <div class="ctrl-row" id="advancedBtns" style="display:none;">
+      <button class="btn" onclick="doFetch()">获取 fetch</button>
+      <button class="btn danger" onclick="showDeleteBranchDialog()">删分支 branch -d</button>
+    </div>
+  </div>
+</div>
+
+<div class="dialog-overlay" id="dialogOverlay">
+  <div class="dialog" id="dialog"></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="ingredient-selector" id="ingredientSelector"></div>
+
+<script>
+// ================================================================
+// HAMBURGER RECIPE SYSTEM - Layer-based model
+// ================================================================
+const INGREDIENTS = [
+  { emoji: '🍅', name: '西红柿' },
+  { emoji: '🥬', name: '生菜' },
+  { emoji: '🥩', name: '牛肉' },
+  { emoji: '🧀', name: '芝士' }
+];
+
+const INITIAL_RECIPE = ['🍅', '🧀', '🥬'];
+
+function getIngredientName(emoji) {
+  const found = INGREDIENTS.find(i => i.emoji === emoji);
+  return found ? found.name : '未知';
+}
+
+// Diff two recipe arrays (layer-by-layer comparison)
+function diffRecipes(oldRecipe, newRecipe) {
+  const result = [];
+  const maxLen = Math.max(oldRecipe.length, newRecipe.length);
+  for (let i = 0; i < maxLen; i++) {
+    if (i >= oldRecipe.length) {
+      result.push({ type: 'added', value: newRecipe[i], index: i });
+    } else if (i >= newRecipe.length) {
+      result.push({ type: 'removed', value: oldRecipe[i], index: i });
+    } else if (oldRecipe[i] !== newRecipe[i]) {
+      result.push({ type: 'modified', oldValue: oldRecipe[i], value: newRecipe[i], index: i });
+    } else {
+      result.push({ type: 'same', value: newRecipe[i], index: i });
+    }
+  }
+  return result;
+}
+
+// Compute diff summary counts
+function diffSummary(oldRecipe, newRecipe) {
+  const diff = diffRecipes(oldRecipe, newRecipe);
+  let added = 0, removed = 0, modified = 0;
+  for (const d of diff) {
+    if (d.type === 'added') added++;
+    else if (d.type === 'removed') removed++;
+    else if (d.type === 'modified') modified++;
+  }
+  return { added, removed, modified };
+}
+
+// Three-way merge for variable-length recipes
+function mergeRecipes(baseRecipe, oursRecipe, theirsRecipe) {
+  // Use simplified positional merge
+  const maxLen = Math.max(baseRecipe.length, oursRecipe.length, theirsRecipe.length);
+  const result = [];
+  const conflicts = [];
+
+  for (let i = 0; i < maxLen; i++) {
+    const base = i < baseRecipe.length ? baseRecipe[i] : undefined;
+    const ours = i < oursRecipe.length ? oursRecipe[i] : undefined;
+    const theirs = i < theirsRecipe.length ? theirsRecipe[i] : undefined;
+
+    const oursChanged = ours !== base;
+    const theirsChanged = theirs !== base;
+
+    if (!oursChanged && !theirsChanged) {
+      // Neither changed this layer
+      if (base !== undefined) result.push(base);
+    } else if (oursChanged && !theirsChanged) {
+      // Only ours changed
+      if (ours !== undefined) result.push(ours);
+      // else: ours deleted it, don't push
+    } else if (!oursChanged && theirsChanged) {
+      // Only theirs changed
+      if (theirs !== undefined) result.push(theirs);
+    } else {
+      // Both changed
+      if (ours === theirs) {
+        // Same change, no conflict
+        if (ours !== undefined) result.push(ours);
+      } else {
+        // Conflict!
+        conflicts.push({ index: result.length, ours, theirs, base });
+        result.push(ours !== undefined ? ours : theirs);
+      }
+    }
+  }
+
+  return { recipe: result, conflicts };
+}
+
+// Random operation for teammate
+function randomRecipeOperation(recipe) {
+  const ops = [];
+  if (recipe.length > 1) ops.push('remove');
+  ops.push('modify', 'add');
+  const op = ops[Math.floor(Math.random() * ops.length)];
+  const newRecipe = [...recipe];
+  const randomIngredient = () => INGREDIENTS[Math.floor(Math.random() * INGREDIENTS.length)].emoji;
+
+  if (op === 'modify' && newRecipe.length > 0) {
+    const idx = Math.floor(Math.random() * newRecipe.length);
+    let newIng;
+    do { newIng = randomIngredient(); } while (newIng === newRecipe[idx]);
+    newRecipe[idx] = newIng;
+  } else if (op === 'add') {
+    const ing = randomIngredient();
+    newRecipe.push(ing);
+  } else if (op === 'remove' && newRecipe.length > 1) {
+    const idx = Math.floor(Math.random() * newRecipe.length);
+    newRecipe.splice(idx, 1);
+  }
+  return newRecipe;
+}
+
+function findMergeBase(repo, id1, id2) {
+  const ancestors1 = new Set();
+  const q1 = [id1];
+  while (q1.length) {
+    const id = q1.shift();
+    if (ancestors1.has(id)) continue;
+    ancestors1.add(id);
+    const c = repo.commits.get(id);
+    if (c) q1.push(...c.parents);
+  }
+  const q2 = [id2];
+  const vis = new Set();
+  while (q2.length) {
+    const id = q2.shift();
+    if (vis.has(id)) continue;
+    vis.add(id);
+    if (ancestors1.has(id)) return id;
+    const c = repo.commits.get(id);
+    if (c) q2.push(...c.parents);
+  }
+  return null;
+}
+
+// ================================================================
+// GIT REPO ENGINE
+// ================================================================
+class Repo {
+  constructor() {
+    this.commits = new Map();
+    this.branches = new Map();
+    this.HEAD = { type: 'branch', ref: 'main' };
+    this.counter = 0;
+    this.commitCounter = 0;
+    this.branchColors = new Map();
+    this.colorIdx = 0;
+    this.remoteRefs = new Map();
+  }
+
+  init(initialRecipe) {
+    const id = this._id();
+    this.commits.set(id, { id, msg: '初始提交', parents: [], recipe: [...initialRecipe], author: '老师' });
+    this.branches.set('main', id);
+    this.branchColors.set('main', '#2563eb');
+  }
+
+  _id() { return 'c' + (this.counter++); }
+  headCommit() { return this.HEAD.type === 'branch' ? this.branches.get(this.HEAD.ref) : this.HEAD.ref; }
+  currentBranch() { return this.HEAD.type === 'branch' ? this.HEAD.ref : null; }
+
+  getHeadRecipe() {
+    const hc = this.commits.get(this.headCommit());
+    return hc ? [...hc.recipe] : [...INITIAL_RECIPE];
+  }
+
+  commit(prefix, userMsg, recipe, author) {
+    const parent = this.headCommit();
+    const id = this._id();
+    const label = prefix || '绿';
+    this.commitCounter++;
+    const defaultMsg = label + this.commitCounter;
+    const msg = userMsg ? `${defaultMsg}: ${userMsg}` : defaultMsg;
+    this.commits.set(id, { id, msg, parents: [parent], recipe: [...recipe], author: author || '小绿' });
+    if (this.HEAD.type === 'branch') this.branches.set(this.HEAD.ref, id);
+    else this.HEAD.ref = id;
+    return id;
+  }
+
+  branch(name) {
+    if (this.branches.has(name)) throw new Error(`分支 "${name}" 已存在`);
+    this.branches.set(name, this.headCommit());
+    const branchColors = ['#16a34a','#d97706','#9333ea','#0891b2','#4f46e5','#ca8a04'];
+    this.branchColors.set(name, branchColors[this.colorIdx++ % branchColors.length]);
+  }
+
+  checkout(name) {
+    if (!this.branches.has(name)) throw new Error(`分支 "${name}" 不存在`);
+    this.HEAD = { type: 'branch', ref: name };
+  }
+
+  deleteBranch(name) {
+    if (!this.branches.has(name)) throw new Error(`分支 "${name}" 不存在`);
+    if (this.currentBranch() === name) throw new Error('不能删除当前所在分支');
+    this.branches.delete(name);
+  }
+
+  getMergeType(target) {
+    if (!this.branches.has(target)) throw new Error(`分支 "${target}" 不存在`);
+    const cur = this.currentBranch();
+    if (!cur) throw new Error('HEAD 未指向分支');
+    if (cur === target) throw new Error('不能合并自己');
+    const curId = this.branches.get(cur);
+    const targetId = this.branches.get(target);
+    if (this._isAnc(targetId, curId)) return 'up-to-date';
+    if (this._isAnc(curId, targetId)) return 'fast-forward';
+    return 'merge';
+  }
+
+  merge(target) {
+    if (!this.branches.has(target)) throw new Error(`分支 "${target}" 不存在`);
+    const cur = this.currentBranch();
+    if (!cur) throw new Error('HEAD 未指向分支');
+    if (cur === target) throw new Error('不能合并自己');
+    const curId = this.branches.get(cur);
+    const targetId = this.branches.get(target);
+    if (this._isAnc(targetId, curId)) throw new Error('已是最新');
+    if (this._isAnc(curId, targetId)) { this.branches.set(cur, targetId); return { id: targetId, type: 'fast-forward' }; }
+
+    const baseId = findMergeBase(this, curId, targetId);
+    const baseCommit = this.commits.get(baseId);
+    const curCommit = this.commits.get(curId);
+    const targetCommit = this.commits.get(targetId);
+    const baseRecipe = baseCommit ? baseCommit.recipe : [...INITIAL_RECIPE];
+    const curRecipe = curCommit ? curCommit.recipe : [...INITIAL_RECIPE];
+    const targetRecipe = targetCommit ? targetCommit.recipe : [...INITIAL_RECIPE];
+    const { recipe: mergedRecipe, conflicts } = mergeRecipes(baseRecipe, curRecipe, targetRecipe);
+
+    if (conflicts.length > 0) {
+      return { type: 'recipe-conflict', curId, targetId, baseRecipe, curRecipe, targetRecipe, mergedRecipe, conflicts };
+    }
+
+    const id = this._id();
+    this.commits.set(id, { id, msg: '合并', parents: [curId, targetId], recipe: mergedRecipe, author: '小绿' });
+    this.branches.set(cur, id);
+    return { id, type: 'merge' };
+  }
+
+  mergeWithRecipe(target, recipe) {
+    const cur = this.currentBranch();
+    const curId = this.branches.get(cur);
+    const targetId = this.branches.get(target);
+    const id = this._id();
+    this.commits.set(id, { id, msg: '合并', parents: [curId, targetId], recipe: [...recipe], author: '小绿' });
+    this.branches.set(cur, id);
+    return { id, type: 'merge' };
+  }
+
+  reset(targetId) {
+    const cur = this.currentBranch();
+    if (!cur) throw new Error('HEAD 未指向分支');
+    if (!this.commits.has(targetId)) throw new Error('目标提交不存在');
+    this.branches.set(cur, targetId);
+  }
+
+  revert(targetId) {
+    const headId = this.headCommit();
+    const targetCommit = this.commits.get(targetId);
+    if (!targetCommit) throw new Error('目标提交不存在');
+    // Revert to the state of target's parent (undo that commit)
+    const parentCommit = targetCommit.parents.length ? this.commits.get(targetCommit.parents[0]) : null;
+    const revertRecipe = parentCommit ? [...parentCommit.recipe] : [...INITIAL_RECIPE];
+    const id = this._id();
+    this.commits.set(id, { id, msg: `撤销「${targetCommit.msg}」`, parents: [headId], recipe: revertRecipe, author: '小绿' });
+    if (this.HEAD.type === 'branch') this.branches.set(this.HEAD.ref, id);
+    return id;
+  }
+
+  // Get commit history for current branch (for selection dialogs)
+  getHistory() {
+    const commits = [];
+    let cId = this.headCommit();
+    const visited = new Set();
+    while (cId && !visited.has(cId)) {
+      visited.add(cId);
+      const c = this.commits.get(cId);
+      if (!c) break;
+      commits.push(c);
+      cId = c.parents.length ? c.parents[0] : null;
+    }
+    return commits;
+  }
+
+  reachableCommits() {
+    const vis = new Set();
+    const q = [];
+    for (const [, bid] of this.branches) q.push(bid);
+    for (const [, rid] of this.remoteRefs) q.push(rid);
+    while (q.length) {
+      const id = q.shift();
+      if (!id || vis.has(id)) continue;
+      vis.add(id);
+      const c = this.commits.get(id);
+      if (c) q.push(...c.parents);
+    }
+    return vis;
+  }
+
+  _isAnc(a, d) {
+    const vis = new Set(), q = [d];
+    while (q.length) {
+      const id = q.shift();
+      if (id === a) return true;
+      if (vis.has(id)) continue;
+      vis.add(id);
+      const c = this.commits.get(id);
+      if (c) q.push(...c.parents);
+    }
+    return false;
+  }
+
+  getNewCommits(branch, other) {
+    const tip = this.branches.get(branch);
+    if (!tip) return [];
+    const res = [], vis = new Set(), q = [tip];
+    while (q.length) {
+      const id = q.shift();
+      if (vis.has(id)) continue;
+      vis.add(id);
+      if (!other.commits.has(id)) res.push(this.commits.get(id));
+      const c = this.commits.get(id);
+      if (c) q.push(...c.parents);
+    }
+    return res;
+  }
+}
+
+// ================================================================
+// GIT SYSTEM (local + remote + teammate)
+// ================================================================
+class GitSystem {
+  constructor() {
+    this.local = new Repo();
+    this.remote = new Repo();
+    this.teammate = new Repo();
+    this.initialized = false;
+  }
+
+  _copyRepo(src, dst) {
+    dst.commits = new Map();
+    for (const [id, c] of src.commits) {
+      dst.commits.set(id, { ...c, recipe: c.recipe ? [...c.recipe] : [...INITIAL_RECIPE] });
+    }
+    dst.branches = new Map(src.branches);
+    dst.counter = src.counter;
+    dst.branchColors = new Map(src.branchColors);
+    dst.colorIdx = src.colorIdx;
+  }
+
+  push() {
+    const repo = this.local;
+    const branch = repo.currentBranch();
+    if (!branch) throw new Error('HEAD 未指向分支');
+    const tip = repo.branches.get(branch);
+    const rtip = this.remote.branches.get(branch);
+    const news = repo.getNewCommits(branch, this.remote);
+    if (!news.length && tip === rtip) throw new Error('已是最新');
+    if (rtip && !repo._isAnc(rtip, tip)) throw new Error('远端有新提交，请先 Pull');
+    for (const c of news) this.remote.commits.set(c.id, { ...c, recipe: c.recipe ? [...c.recipe] : undefined });
+    if (!this.remote.branches.has(branch)) this.remote.branchColors.set(branch, repo.branchColors.get(branch));
+    this.remote.branches.set(branch, tip);
+    this.remote.counter = Math.max(this.remote.counter, repo.counter);
+    repo.remoteRefs.set('origin/' + branch, tip);
+  }
+
+  fetch() {
+    const repo = this.local;
+    let n = 0;
+    for (const [id, c] of this.remote.commits) {
+      if (!repo.commits.has(id)) { repo.commits.set(id, { ...c, recipe: c.recipe ? [...c.recipe] : undefined }); n++; }
+    }
+    for (const [b, bid] of this.remote.branches) {
+      repo.remoteRefs.set('origin/' + b, bid);
+      if (!repo.branchColors.has(b)) repo.branchColors.set(b, this.remote.branchColors.get(b));
+    }
+    repo.counter = Math.max(repo.counter, this.remote.counter);
+    return n;
+  }
+
+  pull() {
+    const repo = this.local;
+    this.fetch();
+    const branch = repo.currentBranch();
+    if (!branch) throw new Error('HEAD 未指向分支');
+    const rid = repo.remoteRefs.get('origin/' + branch);
+    if (!rid) throw new Error('没有对应远端分支');
+    const lid = repo.branches.get(branch);
+    if (lid === rid || repo._isAnc(rid, lid)) return { type: 'up-to-date' };
+    if (repo._isAnc(lid, rid)) { repo.branches.set(branch, rid); return { type: 'fast-forward', id: rid }; }
+
+    const baseId = findMergeBase(repo, lid, rid);
+    const baseCommit = repo.commits.get(baseId);
+    const localCommit = repo.commits.get(lid);
+    const remoteCommit = repo.commits.get(rid);
+    const baseRecipe = baseCommit ? baseCommit.recipe : [...INITIAL_RECIPE];
+    const localRecipe = localCommit ? localCommit.recipe : [...INITIAL_RECIPE];
+    const remoteRecipe = remoteCommit ? remoteCommit.recipe : [...INITIAL_RECIPE];
+    const { recipe: mergedRecipe, conflicts } = mergeRecipes(baseRecipe, localRecipe, remoteRecipe);
+
+    if (conflicts.length === 0) {
+      const id = repo._id();
+      repo.commits.set(id, { id, msg: '合并', parents: [lid, rid], recipe: mergedRecipe, author: '小绿' });
+      repo.branches.set(branch, id);
+      return { type: 'auto-merge', id };
+    }
+
+    return { type: 'conflict', localId: lid, remoteId: rid, baseRecipe, localRecipe, remoteRecipe, mergedRecipe, conflicts };
+  }
+
+  resolveConflict(strategy, conflictInfo) {
+    const repo = this.local;
+    const branch = repo.currentBranch();
+    const lid = repo.branches.get(branch);
+    const rid = repo.remoteRefs.get('origin/' + branch);
+    const id = repo._id();
+    let msg, recipe;
+
+    const localRecipe = conflictInfo ? conflictInfo.localRecipe : [...INITIAL_RECIPE];
+    const remoteRecipe = conflictInfo ? conflictInfo.remoteRecipe : [...INITIAL_RECIPE];
+    const conflicts = conflictInfo ? conflictInfo.conflicts : [];
+
+    if (strategy === 'mine') {
+      msg = '合并(保留我的)';
+      recipe = [...localRecipe];
+    } else if (strategy === 'theirs') {
+      msg = '合并(保留对方)';
+      recipe = [...remoteRecipe];
+    } else {
+      // 'both' - use merged recipe, resolve conflicts with ours
+      msg = '合并';
+      recipe = [...(conflictInfo ? conflictInfo.mergedRecipe : localRecipe)];
+      for (const c of conflicts) {
+        recipe[c.index] = c.ours !== undefined ? c.ours : c.theirs;
+      }
+    }
+
+    repo.commits.set(id, { id, msg, parents: [lid, rid], recipe, author: '小绿' });
+    repo.branches.set(branch, id);
+    return id;
+  }
+
+  teammateCommit() {
+    const other = this.teammate;
+    const branch = other.currentBranch() || 'main';
+    const parent = other.branches.get(branch);
+    const parentCommit = other.commits.get(parent);
+    const parentRecipe = parentCommit ? parentCommit.recipe : [...INITIAL_RECIPE];
+    const newRecipe = randomRecipeOperation(parentRecipe);
+    other.commitCounter++;
+    const id = 'c' + (other.counter++);
+    const label = '红';
+    const msg = label + other.commitCounter;
+    other.commits.set(id, { id, msg, parents: [parent], recipe: newRecipe, author: '小红' });
+    other.branches.set(branch, id);
+    if (!this.remote.branches.has(branch)) {
+      this.remote.branches.set(branch, parent);
+      this.remote.branchColors.set(branch, other.branchColors.get(branch));
+    }
+    this.remote.commits.set(id, { id, msg, parents: [parent], recipe: [...newRecipe], author: '小红' });
+    this.remote.branches.set(branch, id);
+    this.remote.counter = Math.max(this.remote.counter, other.counter);
+    this.local.counter = Math.max(this.local.counter, this.remote.counter);
+    this.teammate.counter = Math.max(this.teammate.counter, this.remote.counter);
+    other.remoteRefs.set('origin/' + branch, id);
+    return id;
+  }
+
+  getAhead() {
+    const repo = this.local;
+    const branch = repo.currentBranch();
+    if (!branch) return 0;
+    return repo.getNewCommits(branch, this.remote).length;
+  }
+
+  getBehind() {
+    const branch = this.local.currentBranch();
+    if (!branch) return 0;
+    return this.remote.getNewCommits(branch, this.local).length;
+  }
+}
+
+// ================================================================
+// UNIFIED SVG RENDERER
+// ================================================================
+class UnifiedRenderer {
+  constructor(svg) {
+    this.svg = svg;
+    this.R = 14;
+    this.xGap = 70;
+    this.yGap = 72;
+    this.pad = { t: 40, l: 40, r: 220, b: 40 };
+    this.nodeData = [];
+  }
+
+  _commitColor(msg) {
+    if (msg.startsWith('绿')) return '#16a34a';
+    if (msg.startsWith('红')) return '#dc2626';
+    return '#2563eb';
+  }
+
+  render(localRepo, remoteRepo) {
+    const allCommits = new Map();
+    for (const [id, c] of localRepo.commits) {
+      allCommits.set(id, { ...c, recipe: c.recipe ? [...c.recipe] : undefined });
+    }
+    for (const [id, c] of remoteRepo.commits) {
+      if (!allCommits.has(id)) {
+        allCommits.set(id, { ...c, recipe: c.recipe ? [...c.recipe] : undefined });
+      }
+    }
+
+    const localSet = new Set(localRepo.commits.keys());
+    const remoteSet = new Set(remoteRepo.commits.keys());
+    const reachable = this._reachableFrom(allCommits, localRepo, remoteRepo);
+    const { nodes, maxLane, maxLevel } = this._layout(allCommits, localRepo, remoteRepo, reachable);
+
+    const w = this.pad.l + Math.max(maxLane, 0) * this.xGap + this.pad.r;
+    const h = this.pad.t + Math.max(maxLevel, 0) * this.yGap + this.pad.b;
+    this.svg.setAttribute('width', w);
+    this.svg.setAttribute('height', h);
+    this.svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    this.svg.innerHTML = '';
+
+    for (const n of nodes) {
+      const inLocal = localSet.has(n.id);
+      const inRemote = remoteSet.has(n.id);
+      n.synced = inLocal && inRemote;
+      n.localOnly = inLocal && !inRemote;
+      n.remoteOnly = !inLocal && inRemote;
+      n.isUnreachable = !reachable.has(n.id);
+      n.color = this._commitColor(n.msg);
+    }
+
+    for (const n of nodes) {
+      for (const pid of n.parents) {
+        const pn = nodes.find(x => x.id === pid);
+        if (pn) this._edge(pn, n);
+      }
+    }
+    for (const n of nodes) this._node(n, localRepo, allCommits);
+    for (const n of nodes) this._labels(n, localRepo, remoteRepo);
+
+    this.nodeData = nodes;
+    this.allCommits = allCommits;
+  }
+
+  _reachableFrom(allCommits, localRepo, remoteRepo) {
+    const vis = new Set();
+    const q = [];
+    for (const [, bid] of localRepo.branches) q.push(bid);
+    for (const [, rid] of localRepo.remoteRefs) q.push(rid);
+    for (const [, bid] of remoteRepo.branches) q.push(bid);
+    while (q.length) {
+      const id = q.shift();
+      if (!id || vis.has(id)) continue;
+      vis.add(id);
+      const c = allCommits.get(id);
+      if (c) q.push(...c.parents);
+    }
+    return vis;
+  }
+
+  _layout(allCommits, localRepo, remoteRepo, reachable) {
+    const commits = [...allCommits.values()];
+    if (!commits.length) return { nodes: [], maxLane: 0, maxLevel: 0 };
+
+    const levels = new Map(), children = new Map();
+    for (const c of commits) for (const p of c.parents) {
+      if (!children.has(p)) children.set(p, []);
+      children.get(p).push(c.id);
+    }
+    const roots = commits.filter(c => !c.parents.length);
+    const q = [];
+    for (const r of roots) { levels.set(r.id, 0); q.push(r.id); }
+    while (q.length) {
+      const id = q.shift();
+      for (const kid of (children.get(id) || [])) {
+        const nl = levels.get(id) + 1;
+        if (!levels.has(kid) || levels.get(kid) < nl) levels.set(kid, nl);
+        const kc = allCommits.get(kid);
+        if (kc && kc.parents.every(p => levels.has(p))) q.push(kid);
+      }
+    }
+
+    const branchOrder = [];
+    for (const [name] of localRepo.branches) {
+      if (!branchOrder.includes(name)) branchOrder.push(name);
+    }
+    for (const [name] of remoteRepo.branches) {
+      if (!branchOrder.includes(name)) branchOrder.push(name);
+    }
+    const mainIdx = branchOrder.indexOf('main');
+    if (mainIdx > 0) { branchOrder.splice(mainIdx, 1); branchOrder.unshift('main'); }
+
+    const commitLane = new Map(), branchLane = new Map();
+    let li = 0;
+    for (const b of branchOrder) {
+      if (!branchLane.has(b)) branchLane.set(b, li++);
+      let cId = localRepo.branches.get(b) || remoteRepo.branches.get(b);
+      const lane = branchLane.get(b);
+      while (cId && !commitLane.has(cId)) {
+        commitLane.set(cId, lane);
+        const cm = allCommits.get(cId);
+        cId = cm && cm.parents.length ? cm.parents[0] : null;
+      }
+    }
+
+    const headId = localRepo.headCommit();
+    let maxLane = 0, maxLevel = 0;
+    const nodes = commits.map(c => {
+      const lane = commitLane.get(c.id) || 0;
+      const level = levels.get(c.id) || 0;
+      maxLane = Math.max(maxLane, lane);
+      maxLevel = Math.max(maxLevel, level);
+
+      const brLabels = [];
+      for (const [bn, bid] of localRepo.branches) if (bid === c.id) brLabels.push(bn);
+
+      const remoteLabels = [];
+      for (const [rn, rid] of localRepo.remoteRefs) if (rid === c.id) remoteLabels.push(rn);
+      for (const [bn, bid] of remoteRepo.branches) {
+        const refName = 'origin/' + bn;
+        if (bid === c.id && !remoteLabels.includes(refName)) {
+          remoteLabels.push(refName);
+        }
+      }
+
+      return {
+        id: c.id, msg: c.msg, parents: c.parents, recipe: c.recipe, author: c.author,
+        x: this.pad.l + lane * this.xGap,
+        y: this.pad.t + level * this.yGap,
+        brLabels, remoteLabels,
+        isHead: c.id === headId,
+        isMerge: c.parents.length > 1,
+        color: '#888'
+      };
+    });
+    return { nodes, maxLane, maxLevel };
+  }
+
+  _edge(p, c) {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    let d;
+    if (p.x === c.x) d = `M${p.x} ${p.y}L${c.x} ${c.y}`;
+    else { const m = (p.y + c.y) / 2; d = `M${p.x} ${p.y}C${p.x} ${m},${c.x} ${m},${c.x} ${c.y}`; }
+    path.setAttribute('d', d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', c.isUnreachable ? '#ccc' : c.color);
+    path.setAttribute('stroke-width', '2');
+    path.setAttribute('opacity', c.isUnreachable ? '0.3' : '0.45');
+    if (c.isUnreachable || c.localOnly || c.remoteOnly) path.setAttribute('stroke-dasharray', '4 3');
+    this.svg.appendChild(path);
+  }
+
+  _node(n, localRepo, allCommits) {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+    if (n.isUnreachable) {
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', n.x); circle.setAttribute('cy', n.y); circle.setAttribute('r', this.R);
+      circle.setAttribute('fill', '#e8e8e8'); circle.setAttribute('stroke', '#ccc'); circle.setAttribute('stroke-width', '1');
+      circle.setAttribute('stroke-dasharray', '3 2');
+      g.appendChild(circle);
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', n.x); t.setAttribute('y', n.y); t.setAttribute('text-anchor', 'middle');
+      t.setAttribute('dy', '0.35em'); t.setAttribute('fill', '#aaa');
+      t.setAttribute('font-size', '9'); t.setAttribute('font-weight', '600');
+      t.setAttribute('font-family', '-apple-system, sans-serif');
+      t.textContent = n.msg;
+      g.appendChild(t);
+      this.svg.appendChild(g);
+      return;
+    }
+
+    if (n.isHead) {
+      const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      ring.setAttribute('cx', n.x); ring.setAttribute('cy', n.y); ring.setAttribute('r', this.R + 3);
+      ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', n.color); ring.setAttribute('stroke-width', '1.5');
+      ring.setAttribute('stroke-dasharray', '3 2');
+      g.appendChild(ring);
+    }
+
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', n.x); circle.setAttribute('cy', n.y); circle.setAttribute('r', this.R);
+
+    if (n.synced) {
+      circle.setAttribute('fill', n.color);
+    } else {
+      circle.setAttribute('fill', '#fff');
+      circle.setAttribute('stroke', n.color);
+      circle.setAttribute('stroke-width', '2.5');
+      circle.setAttribute('stroke-dasharray', '4 2');
+    }
+    g.appendChild(circle);
+
+    if (n.isMerge) {
+      const mc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      mc.setAttribute('cx', n.x); mc.setAttribute('cy', n.y); mc.setAttribute('r', '4');
+      mc.setAttribute('fill', 'none');
+      mc.setAttribute('stroke', n.synced ? '#fff' : n.color);
+      mc.setAttribute('stroke-width', '1.5');
+      g.appendChild(mc);
+    }
+
+    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    t.setAttribute('x', n.x); t.setAttribute('y', n.y); t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('dy', '0.35em');
+    t.setAttribute('fill', n.synced ? '#fff' : n.color);
+    t.setAttribute('font-size', '8'); t.setAttribute('font-weight', '600');
+    t.setAttribute('font-family', '-apple-system, sans-serif');
+    const displayMsg = n.msg.length > 5 ? n.msg.slice(0, 5) : n.msg;
+    t.textContent = displayMsg;
+    g.appendChild(t);
+
+    // Author label below node
+    if (n.author) {
+      const authorText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      authorText.setAttribute('x', n.x); authorText.setAttribute('y', n.y + this.R + 11);
+      authorText.setAttribute('text-anchor', 'middle');
+      authorText.setAttribute('fill', n.author === '小红' ? '#dc2626' : '#16a34a');
+      authorText.setAttribute('font-size', '7'); authorText.setAttribute('font-weight', '500');
+      authorText.setAttribute('font-family', '-apple-system, sans-serif');
+      authorText.textContent = n.author;
+      g.appendChild(authorText);
+    }
+
+    // Hit area for hover
+    const hitArea = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    hitArea.setAttribute('cx', n.x); hitArea.setAttribute('cy', n.y);
+    hitArea.setAttribute('r', this.R + 4);
+    hitArea.setAttribute('fill', 'transparent');
+    hitArea.setAttribute('stroke', 'none');
+    hitArea.style.pointerEvents = 'all';
+    hitArea.style.cursor = 'pointer';
+    hitArea.dataset.commitId = n.id;
+    g.appendChild(hitArea);
+
+    this.svg.appendChild(g);
+  }
+
+  _labels(n, localRepo, remoteRepo) {
+    if (n.isUnreachable) return;
+    let ox = this.R + 6;
+    const labels = [];
+
+    for (const b of n.brLabels) {
+      labels.push({ t: b, c: localRepo.branchColors.get(b) || '#888', cur: localRepo.currentBranch() === b, remote: false });
+    }
+
+    const seenRemote = new Set();
+    for (const r of n.remoteLabels) {
+      if (!seenRemote.has(r)) {
+        seenRemote.add(r);
+        labels.push({ t: r, c: '#888', cur: false, remote: true });
+      }
+    }
+
+    if (n.isHead) labels.push({ t: 'HEAD', c: '#dc2626', cur: true, remote: false });
+
+    for (const lb of labels) {
+      const tw = lb.t.length * 6 + 10;
+      const ax = n.x + ox;
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', ax); rect.setAttribute('y', n.y - 8);
+      rect.setAttribute('width', tw); rect.setAttribute('height', 16);
+      rect.setAttribute('rx', '3');
+
+      if (lb.remote) {
+        rect.setAttribute('fill', '#f3f4f6');
+        rect.setAttribute('stroke', '#9ca3af');
+        rect.setAttribute('stroke-width', '1');
+        rect.setAttribute('stroke-dasharray', '3 2');
+      } else {
+        rect.setAttribute('fill', lb.c);
+        rect.setAttribute('opacity', lb.cur ? '1' : '0.6');
+      }
+      this.svg.appendChild(rect);
+
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', ax + tw / 2); t.setAttribute('y', n.y);
+      t.setAttribute('text-anchor', 'middle'); t.setAttribute('dy', '0.32em');
+      t.setAttribute('fill', lb.remote ? '#4b5563' : '#fff');
+      t.setAttribute('font-size', '8'); t.setAttribute('font-weight', '600');
+      t.setAttribute('font-family', '-apple-system, sans-serif');
+      t.textContent = lb.t;
+      this.svg.appendChild(t);
+      ox += tw + 4;
+    }
+  }
+}
+
+// ================================================================
+// APP STATE
+// ================================================================
+const sys = new GitSystem();
+const renderer = new UnifiedRenderer(document.getElementById('graphSvg'));
+let pendingConflictInfo = null;
+
+// Remote repo already exists (someone created it on GitHub with a README)
+sys.remote.init(INITIAL_RECIPE);
+sys._copyRepo(sys.remote, sys.teammate);
+sys.teammate.remoteRefs.set('origin/main', sys.remote.branches.get('main'));
+
+// Working recipe state (editable in left panel)
+let workingRecipe = [...INITIAL_RECIPE];
+
+function getCommittedRecipe() {
+  if (!sys.initialized) return [...INITIAL_RECIPE];
+  return sys.local.getHeadRecipe();
+}
+
+function resetWorkingRecipe() {
+  workingRecipe = getCommittedRecipe();
+}
+
+// ================================================================
+// RENDER
+// ================================================================
+function render() {
+  if (sys.initialized) {
+    renderer.render(sys.local, sys.remote);
+  } else {
+    // Before clone: show remote repo info
+    const svg = document.getElementById('graphSvg');
+    svg.setAttribute('width', 400);
+    svg.setAttribute('height', 100);
+    svg.setAttribute('viewBox', '0 0 400 100');
+    svg.innerHTML = '<text x="200" y="40" text-anchor="middle" fill="#666" font-size="13" font-family="-apple-system, sans-serif">☁️ 远端仓库已建好（GitHub）</text><text x="200" y="65" text-anchor="middle" fill="#999" font-size="11" font-family="-apple-system, sans-serif">点击「克隆 clone」把项目拉到本地开始工作</text>';
+  }
+  renderChips();
+  renderLeftPanel();
+  setupHoverEvents();
+}
+
+function renderChips() {
+  const el = document.getElementById('branchChips');
+  const repo = sys.local;
+  const cur = repo.currentBranch();
+  el.innerHTML = '';
+  if (!sys.initialized) return;
+  for (const [name] of repo.branches) {
+    const chip = document.createElement('span');
+    chip.className = 'branch-chip' + (name === cur ? ' current' : '');
+    chip.style.background = repo.branchColors.get(name);
+    chip.textContent = name;
+    chip.onclick = () => {
+      try {
+        repo.checkout(name);
+        resetWorkingRecipe();
+        render();
+        toast(`checkout → ${name}`);
+      } catch(e) { toast(e.message, true); }
+    };
+    el.appendChild(chip);
+  }
+}
+
+function renderLeftPanel() {
+  const repo = sys.local;
+
+  if (!sys.initialized) {
+    // Before clone: show that we haven't pulled the project yet
+    document.getElementById('panelBranch').textContent = '未克隆';
+    document.getElementById('panelBranch').style.color = '#999';
+    // Show the hamburger view (preview of what's in the remote)
+    renderSandwichView();
+    // Show message about cloning
+    const diffEl = document.getElementById('diffSummary');
+    diffEl.innerHTML = '远端已有项目，请先克隆到本地';
+    diffEl.style.background = '#eff6ff';
+    document.getElementById('panelMessage').textContent = '-';
+    document.getElementById('panelSync').innerHTML = '<span style="color:#999">未连接</span>';
+    return;
+  }
+
+  const hc = repo.commits.get(repo.headCommit());
+
+  // Branch
+  document.getElementById('panelBranch').textContent = repo.currentBranch() || 'detached';
+  document.getElementById('panelBranch').style.color = repo.branchColors.get(repo.currentBranch()) || '#333';
+
+  // Hamburger view
+  renderSandwichView();
+
+  // Diff summary
+  renderDiffSummary();
+
+  // Message
+  document.getElementById('panelMessage').textContent = hc ? hc.msg : '-';
+
+  // Sync
+  const syncEl = document.getElementById('panelSync');
+  const ahead = sys.getAhead();
+  const behind = sys.getBehind();
+  if (!ahead && !behind) {
+    syncEl.innerHTML = '<span class="synced">已同步</span>';
+  } else {
+    let html = '';
+    if (ahead > 0) html += `<span class="ahead">\u2191${ahead} 待推送</span>`;
+    if (behind > 0) html += `<span class="behind">\u2193${behind} 待拉取</span>`;
+    syncEl.innerHTML = html;
+  }
+}
+
+function renderSandwichView() {
+  const el = document.getElementById('sandwichView');
+  el.innerHTML = '';
+
+  // Top bun
+  const topBread = document.createElement('div');
+  topBread.className = 'sandwich-bread';
+  topBread.innerHTML = '<span class="bread-emoji">🍔</span><span class="bread-label">汉堡包（顶）</span>';
+  el.appendChild(topBread);
+
+  // Middle layers
+  for (let i = 0; i < workingRecipe.length; i++) {
+    const layer = document.createElement('div');
+    layer.className = 'sandwich-layer';
+    layer.innerHTML = `
+      <span class="layer-emoji">${workingRecipe[i]}</span>
+      <span class="layer-name">${getIngredientName(workingRecipe[i])}</span>
+      <div class="layer-actions">
+        <span class="layer-btn" onclick="showModifySelector(${i}, event)" title="修改">✎</span>
+        <span class="layer-btn delete" onclick="removeLayer(${i})" title="删除">×</span>
+      </div>
+    `;
+    el.appendChild(layer);
+  }
+
+  // Add layer button
+  const addBtn = document.createElement('div');
+  addBtn.className = 'add-layer-btn';
+  addBtn.textContent = '+ 加一层';
+  addBtn.onclick = (e) => showAddSelector(e);
+  el.appendChild(addBtn);
+
+  // Bottom bun
+  const bottomBread = document.createElement('div');
+  bottomBread.className = 'sandwich-bread';
+  bottomBread.innerHTML = '<span class="bread-emoji">🍔</span><span class="bread-label">汉堡包（底）</span>';
+  el.appendChild(bottomBread);
+}
+
+function renderDiffSummary() {
+  const el = document.getElementById('diffSummary');
+  const committed = getCommittedRecipe();
+  const diff = diffRecipes(committed, workingRecipe);
+  const changes = diff.filter(d => d.type !== 'same');
+  if (changes.length === 0) {
+    el.innerHTML = '工作区干净（无修改）';
+    el.style.background = '#f0fdf4';
+  } else {
+    let html = '<strong>未存档的修改：</strong><br>';
+    for (const d of changes) {
+      if (d.type === 'added') {
+        html += `<span class="added">+ 第${d.index + 1}层 新增 ${d.value} ${getIngredientName(d.value)}</span><br>`;
+      } else if (d.type === 'removed') {
+        html += `<span class="removed">- 第${d.index + 1}层 删除 ${d.value} ${getIngredientName(d.value)}</span><br>`;
+      } else if (d.type === 'modified') {
+        html += `<span class="modified">~ 第${d.index + 1}层 ${d.oldValue}${getIngredientName(d.oldValue)} → ${d.value}${getIngredientName(d.value)}</span><br>`;
+      }
+    }
+    el.innerHTML = html;
+    el.style.background = '#fffbeb';
+  }
+}
+
+// ================================================================
+// INGREDIENT SELECTOR
+// ================================================================
+function showIngredientSelector(x, y, callback, excludeEmoji) {
+  const sel = document.getElementById('ingredientSelector');
+  sel.innerHTML = '';
+  sel.style.left = x + 'px';
+  sel.style.top = y + 'px';
+  sel.classList.add('show');
+
+  for (const ing of INGREDIENTS) {
+    if (ing.emoji === excludeEmoji) continue;
+    const opt = document.createElement('span');
+    opt.className = 'ing-option';
+    opt.innerHTML = `${ing.emoji} ${ing.name}`;
+    opt.onclick = () => {
+      callback(ing.emoji);
+      hideIngredientSelector();
+    };
+    sel.appendChild(opt);
+  }
+
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener('click', closeIngSelectorOnOutside, { once: true });
+  }, 10);
+}
+
+function closeIngSelectorOnOutside(e) {
+  const sel = document.getElementById('ingredientSelector');
+  if (!sel.contains(e.target)) {
+    hideIngredientSelector();
+  }
+}
+
+function hideIngredientSelector() {
+  document.getElementById('ingredientSelector').classList.remove('show');
+}
+
+function showModifySelector(index, event) {
+  event.stopPropagation();
+  const rect = event.target.getBoundingClientRect();
+  showIngredientSelector(rect.right + 4, rect.top, (emoji) => {
+    workingRecipe[index] = emoji;
+    renderLeftPanel();
+  }, workingRecipe[index]);
+}
+
+function showAddSelector(event) {
+  event.stopPropagation();
+  const rect = event.target.getBoundingClientRect();
+  showIngredientSelector(rect.right + 4, rect.top, (emoji) => {
+    workingRecipe.push(emoji);
+    renderLeftPanel();
+  });
+}
+
+function removeLayer(index) {
+  if (workingRecipe.length <= 1) {
+    toast('至少保留一层食材', true);
+    return;
+  }
+  workingRecipe.splice(index, 1);
+  renderLeftPanel();
+}
+
+// ================================================================
+// HOVER INTERACTION
+// ================================================================
+const hoverCard = document.getElementById('hoverCard');
+const graphContainer = document.getElementById('graphContainer');
+
+function setupHoverEvents() {
+  const svg = document.getElementById('graphSvg');
+  svg.onmousemove = handleSvgMouseMove;
+  svg.onmouseleave = hideHoverCard;
+}
+
+function handleSvgMouseMove(e) {
+  const target = e.target;
+  const commitId = target.dataset && target.dataset.commitId;
+  if (commitId) {
+    showHoverCard(commitId, e);
+  } else {
+    const parent = target.closest ? target.closest('g') : target.parentElement;
+    if (parent) {
+      const hitEl = parent.querySelector('[data-commit-id]');
+      if (hitEl) {
+        showHoverCard(hitEl.dataset.commitId, e);
+        return;
+      }
+    }
+    hideHoverCard();
+  }
+}
+
+function showHoverCard(commitId, e) {
+  const nodeData = renderer.nodeData.find(n => n.id === commitId);
+  if (!nodeData || nodeData.isUnreachable) { hideHoverCard(); return; }
+
+  const allCommits = renderer.allCommits;
+
+  const msgEl = document.getElementById('hcMsg');
+  const sandwichEl = document.getElementById('hcSandwich');
+  const diffLabel = document.getElementById('hcDiffLabel');
+
+  msgEl.textContent = (nodeData.author ? `[${nodeData.author}] ` : '') + nodeData.msg;
+  sandwichEl.innerHTML = '';
+
+  // Get parent recipe for diff
+  let parentRecipe = null;
+  if (nodeData.parents.length > 0) {
+    const parentCommit = allCommits.get(nodeData.parents[0]);
+    if (parentCommit && parentCommit.recipe) {
+      parentRecipe = parentCommit.recipe;
+    }
+  }
+
+  if (nodeData.recipe) {
+    // Top bun
+    const topBread = document.createElement('span');
+    topBread.className = 'hc-bread';
+    topBread.textContent = '🍔';
+    sandwichEl.appendChild(topBread);
+
+    // Compute diff with parent
+    let diff = null;
+    if (parentRecipe) {
+      diff = diffRecipes(parentRecipe, nodeData.recipe);
+    }
+
+    // Show layers with diff coloring
+    if (diff) {
+      for (const d of diff) {
+        const layer = document.createElement('span');
+        layer.className = 'hc-layer';
+        if (d.type === 'added') {
+          layer.classList.add('diff-added');
+          layer.textContent = `${d.value} ${getIngredientName(d.value)}`;
+        } else if (d.type === 'removed') {
+          layer.classList.add('diff-removed');
+          layer.textContent = `${d.value} ${getIngredientName(d.value)}`;
+        } else if (d.type === 'modified') {
+          layer.classList.add('diff-modified');
+          layer.textContent = `${d.value} ${getIngredientName(d.value)}`;
+        } else {
+          layer.textContent = `${d.value} ${getIngredientName(d.value)}`;
+        }
+        sandwichEl.appendChild(layer);
+      }
+      diffLabel.textContent = '绿=新增 红=删除 黄=修改';
+    } else {
+      for (const ing of nodeData.recipe) {
+        const layer = document.createElement('span');
+        layer.className = 'hc-layer';
+        layer.textContent = `${ing} ${getIngredientName(ing)}`;
+        sandwichEl.appendChild(layer);
+      }
+      diffLabel.textContent = '';
+    }
+
+    // Bottom bun
+    const bottomBread = document.createElement('span');
+    bottomBread.className = 'hc-bread';
+    bottomBread.textContent = '🍔';
+    sandwichEl.appendChild(bottomBread);
+  } else {
+    diffLabel.textContent = '';
+  }
+
+  // Position card
+  let cardX = nodeData.x + 24;
+  let cardY = nodeData.y - 10;
+  hoverCard.style.left = cardX + 'px';
+  hoverCard.style.top = cardY + 'px';
+  hoverCard.classList.add('visible');
+}
+
+function hideHoverCard() {
+  hoverCard.classList.remove('visible');
+}
+
+// ================================================================
+// ACTIONS
+// ================================================================
+function requireInit() {
+  if (!sys.initialized) {
+    toast('请先点击「克隆 clone」拉取项目', true);
+    return false;
+  }
+  return true;
+}
+
+function doCommit() {
+  if (!requireInit()) return;
+  const committed = getCommittedRecipe();
+  const { added, removed, modified } = diffSummary(committed, workingRecipe);
+  if (added === 0 && removed === 0 && modified === 0) {
+    toast('工作区没有修改，无需存档', true);
+    return;
+  }
+  openDialog('存档 (commit)', '描述这次改了什么', val => {
+    const id = sys.local.commit('绿', val, workingRecipe, '小绿');
+    resetWorkingRecipe();
+    render();
+    toast('已存档 → ' + sys.local.commits.get(id).msg);
+  });
+}
+
+function showBranchDialog(andCheckout) {
+  if (!requireInit()) return;
+  const title = andCheckout ? '创建分支并切换 (checkout -b)' : '创建分支 (branch)';
+  openDialog(title, 'feature-name', val => {
+    if (!val || /\s/.test(val)) { toast('分支名无效', true); return; }
+    try {
+      sys.local.branch(val);
+      if (andCheckout) sys.local.checkout(val);
+      resetWorkingRecipe();
+      render();
+      toast(andCheckout ? `checkout -b ${val}` : `branch ${val}`);
+    } catch(e) { toast(e.message, true); }
+  });
+}
+
+function showDeleteBranchDialog() {
+  const repo = sys.local;
+  const cur = repo.currentBranch();
+  const others = [...repo.branches.keys()].filter(b => b !== cur);
+  if (!others.length) { toast('没有可删除的分支', true); return; }
+  const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
+  dl.innerHTML = `<h3>删除分支</h3><p>选择要删除的分支（不可删除当前分支）</p><div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-bottom:0.8rem">${others.map(b => `<button class="btn danger" onclick="doDeleteBranch('${b}')">${b}</button>`).join('')}</div><div class="dialog-btns"><button class="btn" onclick="closeDialog()">取消</button></div>`;
+  ov.classList.add('show');
+}
+
+function doDeleteBranch(name) {
+  try { sys.local.deleteBranch(name); closeDialog(); render(); toast(`branch -d ${name}`); }
+  catch(e) { toast(e.message, true); }
+}
+
+function showMergeDialog() {
+  const repo = sys.local; const cur = repo.currentBranch();
+  if (!cur) { toast('HEAD 未指向分支', true); return; }
+  const others = [...repo.branches.keys()].filter(b => b !== cur);
+  if (!others.length) { toast('没有其他分支', true); return; }
+  const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
+  dl.innerHTML = `<h3>合并到 ${cur}</h3><div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-bottom:0.8rem">${others.map(b => `<button class="btn" onclick="doMerge('${b}')">${b}</button>`).join('')}</div><div class="dialog-btns"><button class="btn" onclick="closeDialog()">取消</button></div>`;
+  ov.classList.add('show');
+}
+
+function doMerge(b) {
+  try {
+    const result = sys.local.merge(b);
+    if (result.type === 'recipe-conflict') {
+      closeDialog();
+      render();
+      showMergeRecipeConflictDialog(b, result);
+      return;
+    }
+    closeDialog();
+    resetWorkingRecipe();
+    render();
+    toast(result.type === 'fast-forward' ? `fast-forward merge ${b}` : `merge ${b}`);
+  } catch(e) { toast(e.message, true); }
+}
+
+function showMergeRecipeConflictDialog(targetBranch, conflictResult) {
+  const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
+  const { curRecipe, targetRecipe, conflicts } = conflictResult;
+  const repo = sys.local;
+  const cur = repo.currentBranch();
+
+  window._mergeConflictTarget = targetBranch;
+  window._mergeConflictInfo = conflictResult;
+
+  const conflictIndices = new Set(conflicts.map(c => c.index));
+
+  let oursHtml = '<span class="preview-bread">🍔</span>';
+  for (let i = 0; i < curRecipe.length; i++) {
+    const cls = conflictIndices.has(i) ? ' conflict' : '';
+    oursHtml += `<span class="preview-layer${cls}">${curRecipe[i]} ${getIngredientName(curRecipe[i])}</span>`;
+  }
+  oursHtml += '<span class="preview-bread">🍔</span>';
+
+  let theirsHtml = '<span class="preview-bread">🍔</span>';
+  for (let i = 0; i < targetRecipe.length; i++) {
+    const cls = conflictIndices.has(i) ? ' conflict' : '';
+    theirsHtml += `<span class="preview-layer${cls}">${targetRecipe[i]} ${getIngredientName(targetRecipe[i])}</span>`;
+  }
+  theirsHtml += '<span class="preview-bread">🍔</span>';
+
+  dl.innerHTML = `
+    <h3>配方冲突!</h3>
+    <p>合并 <b>${targetBranch}</b> → <b>${cur}</b> 时，${conflicts.length} 层发生冲突（红框标出）：</p>
+    <div class="recipe-compare">
+      <div class="side">
+        <div class="side-label">小绿的 (${cur})</div>
+        <div class="sandwich-preview">${oursHtml}</div>
+      </div>
+      <div class="side">
+        <div class="side-label">小红的 (${targetBranch})</div>
+        <div class="sandwich-preview">${theirsHtml}</div>
+      </div>
+    </div>
+    <div class="dialog-btns" style="flex-direction:column;align-items:stretch;">
+      <button class="btn" onclick="resolveMergeRecipe('mine')">保留小绿的</button>
+      <button class="btn" onclick="resolveMergeRecipe('theirs')">保留小红的</button>
+      <button class="btn active" onclick="resolveMergeRecipe('both')">合并两者</button>
+    </div>`;
+  ov.classList.add('show');
+}
+
+function resolveMergeRecipe(strategy) {
+  const targetBranch = window._mergeConflictTarget;
+  const info = window._mergeConflictInfo;
+  const repo = sys.local;
+  let recipe;
+  if (strategy === 'mine') {
+    recipe = [...info.curRecipe];
+  } else if (strategy === 'theirs') {
+    recipe = [...info.targetRecipe];
+  } else {
+    recipe = [...info.mergedRecipe];
+    for (const c of info.conflicts) {
+      recipe[c.index] = c.ours !== undefined ? c.ours : c.theirs;
+    }
+  }
+  repo.mergeWithRecipe(targetBranch, recipe);
+  resetWorkingRecipe();
+  closeDialog();
+  render();
+  const labels = { mine: '保留小绿的配方', theirs: '保留小红的配方', both: '合并两者' };
+  toast(`配方冲突已解决: ${labels[strategy]}`);
+}
+
+function doReset() {
+  if (!requireInit()) return;
+  const history = sys.local.getHistory();
+  if (history.length <= 1) { toast('已是第一个提交，无法回退', true); return; }
+  // Show selection dialog (skip current HEAD which is history[0])
+  const options = history.slice(1);
+  const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
+  let optHtml = options.map(c => {
+    const author = c.author ? `[${c.author}]` : '';
+    const recipe = c.recipe ? c.recipe.join('') : '';
+    return `<button class="btn" style="text-align:left;width:100%;margin-bottom:4px;" onclick="confirmReset('${c.id}')"><b>${c.msg}</b> <span style="color:#888;font-size:0.7rem">${author} ${recipe}</span></button>`;
+  }).join('');
+  dl.innerHTML = `<h3>回退到哪个存档？(reset)</h3><p style="font-size:0.72rem;color:#888;">回退 = 删掉后面的存档，回到选中的版本。<b>未 push 的提交会丢失！</b></p><div style="max-height:200px;overflow-y:auto;margin-bottom:0.7rem;">${optHtml}</div><div class="dialog-btns"><button class="btn" onclick="closeDialog()">取消</button></div>`;
+  ov.classList.add('show');
+}
+
+function confirmReset(targetId) {
+  try {
+    sys.local.reset(targetId);
+    resetWorkingRecipe();
+    closeDialog();
+    render();
+    toast('reset → ' + sys.local.commits.get(targetId).msg);
+  } catch(e) { toast(e.message, true); }
+}
+
+function doRevert() {
+  if (!requireInit()) return;
+  const history = sys.local.getHistory();
+  if (history.length <= 1) { toast('已是第一个提交，无法撤销', true); return; }
+  // Can revert any commit except the initial one
+  const options = history.filter(c => c.parents.length > 0);
+  if (!options.length) { toast('没有可撤销的提交', true); return; }
+  const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
+  let optHtml = options.map(c => {
+    const author = c.author ? `[${c.author}]` : '';
+    const recipe = c.recipe ? c.recipe.join('') : '';
+    return `<button class="btn" style="text-align:left;width:100%;margin-bottom:4px;" onclick="confirmRevert('${c.id}')"><b>${c.msg}</b> <span style="color:#888;font-size:0.7rem">${author} ${recipe}</span></button>`;
+  }).join('');
+  dl.innerHTML = `<h3>撤销哪个提交？(revert)</h3><p style="font-size:0.72rem;color:#888;">撤销 = 新增一个「反向操作」的存档，历史不变。<b>安全，适合已 push 的提交。</b></p><div style="max-height:200px;overflow-y:auto;margin-bottom:0.7rem;">${optHtml}</div><div class="dialog-btns"><button class="btn" onclick="closeDialog()">取消</button></div>`;
+  ov.classList.add('show');
+}
+
+function confirmRevert(targetId) {
+  try {
+    const id = sys.local.revert(targetId);
+    resetWorkingRecipe();
+    closeDialog();
+    render();
+    toast('revert → ' + sys.local.commits.get(id).msg);
+  } catch(e) { toast(e.message, true); }
+}
+
+function doPush() {
+  try { sys.push(); render(); toast('push 成功 — 已推送到远端（备份+共享）'); }
+  catch(e) { toast(e.message, true); }
+}
+
+function doFetch() {
+  try { const n = sys.fetch(); render(); toast(`fetch: +${n} 个新提交`); }
+  catch(e) { toast(e.message, true); }
+}
+
+function doPull() {
+  try {
+    const result = sys.pull();
+    if (result.type === 'up-to-date') { render(); toast('已是最新'); return; }
+    if (result.type === 'fast-forward') { resetWorkingRecipe(); render(); toast('pull (fast-forward)'); return; }
+    if (result.type === 'auto-merge') { resetWorkingRecipe(); render(); toast('pull: 自动合并（改的是不同位置）'); return; }
+    render();
+    pendingConflictInfo = result;
+    showConflictDialog(result);
+  } catch(e) { toast(e.message, true); }
+}
+
+function showConflictDialog(conflictResult) {
+  const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
+  const hasRecipeConflict = conflictResult && conflictResult.conflicts && conflictResult.conflicts.length > 0;
+
+  let recipeHtml = '';
+  if (hasRecipeConflict) {
+    const { localRecipe, remoteRecipe, conflicts } = conflictResult;
+    const conflictIndices = new Set(conflicts.map(c => c.index));
+
+    let localHtml = '<span class="preview-bread">🍔</span>';
+    for (let i = 0; i < localRecipe.length; i++) {
+      const cls = conflictIndices.has(i) ? ' conflict' : '';
+      localHtml += `<span class="preview-layer${cls}">${localRecipe[i]} ${getIngredientName(localRecipe[i])}</span>`;
+    }
+    localHtml += '<span class="preview-bread">🍔</span>';
+
+    let remoteHtml = '<span class="preview-bread">🍔</span>';
+    for (let i = 0; i < remoteRecipe.length; i++) {
+      const cls = conflictIndices.has(i) ? ' conflict' : '';
+      remoteHtml += `<span class="preview-layer${cls}">${remoteRecipe[i]} ${getIngredientName(remoteRecipe[i])}</span>`;
+    }
+    remoteHtml += '<span class="preview-bread">🍔</span>';
+
+    recipeHtml = `
+      <div class="recipe-compare">
+        <div class="side">
+          <div class="side-label">小绿的汉堡</div>
+          <div class="sandwich-preview">${localHtml}</div>
+        </div>
+        <div class="side">
+          <div class="side-label">小红的汉堡</div>
+          <div class="sandwich-preview">${remoteHtml}</div>
+        </div>
+      </div>`;
+  }
+
+  dl.innerHTML = `
+    <h3>合并冲突</h3>
+    <p>小绿和小红都修改了同一层食材。${hasRecipeConflict ? `${conflictResult.conflicts.length} 层冲突（红框标出）：` : 'Git 无法自动合并，需要你决定怎么处理：'}</p>
+    ${recipeHtml}
+    <div class="dialog-btns" style="flex-direction:column;align-items:stretch;">
+      <button class="btn" onclick="resolveConflict('mine')">保留小绿的</button>
+      <button class="btn" onclick="resolveConflict('theirs')">保留小红的</button>
+      <button class="btn active" onclick="resolveConflict('both')">合并两者</button>
+    </div>`;
+  ov.classList.add('show');
+}
+
+function resolveConflict(strategy) {
+  const id = sys.resolveConflict(strategy, pendingConflictInfo);
+  pendingConflictInfo = null;
+  resetWorkingRecipe();
+  closeDialog();
+  render();
+  const labels = { mine: '保留小绿的', theirs: '保留小红的', both: '合并两者' };
+  toast(`冲突已解决: ${labels[strategy]}`);
+}
+
+function doTeammateCommit() {
+  if (!requireInit()) return;
+  const id = sys.teammateCommit();
+  render();
+  toast('小红提交了 → ' + sys.remote.commits.get(id).msg);
+}
+
+function doClone() {
+  if (sys.initialized) {
+    toast('已经克隆过了', true);
+    return;
+  }
+  const repo = sys.local;
+  const remote = sys.remote;
+  for (const [id, c] of remote.commits) {
+    if (!repo.commits.has(id)) {
+      repo.commits.set(id, { ...c, recipe: c.recipe ? [...c.recipe] : undefined });
+    }
+  }
+  for (const [b, bid] of remote.branches) {
+    repo.branches.set(b, bid);
+    repo.remoteRefs.set('origin/' + b, bid);
+    if (!repo.branchColors.has(b)) repo.branchColors.set(b, remote.branchColors.get(b) || '#2563eb');
+  }
+  repo.HEAD = { type: 'branch', ref: 'main' };
+  repo.counter = Math.max(repo.counter, remote.counter);
+  sys.initialized = true;
+  // Hide the clone section after success
+  const cloneGroup = document.querySelector('.controls .ctrl-group:first-child');
+  if (cloneGroup) cloneGroup.style.display = 'none';
+  resetWorkingRecipe();
+  render();
+  toast('clone 成功 — 已从远端拉取项目到本地');
+}
+
+// === Dialog utils ===
+function openDialog(title, ph, fn) {
+  const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
+  dl.innerHTML = `<h3>${title}</h3><input id="dlgI" placeholder="${ph}" autofocus><div class="dialog-btns"><button class="btn" onclick="closeDialog()">取消</button><button class="btn active" onclick="cfmDlg()">确定</button></div>`;
+  ov.classList.add('show'); dl._fn = fn;
+  setTimeout(() => { const i = document.getElementById('dlgI'); i.focus(); i.onkeydown = e => { if (e.key==='Enter') cfmDlg(); if (e.key==='Escape') closeDialog(); }; }, 50);
+}
+function cfmDlg() { const v = document.getElementById('dlgI').value.trim(); document.getElementById('dialog')._fn?.(v); closeDialog(); }
+function closeDialog() { document.getElementById('dialogOverlay').classList.remove('show'); }
+document.getElementById('dialogOverlay').onclick = e => { if (e.target === e.currentTarget) closeDialog(); };
+
+function toast(m, err) {
+  const el = document.getElementById('toast');
+  el.textContent = m; el.className = 'toast show' + (err ? ' error' : '');
+  clearTimeout(el._t); el._t = setTimeout(() => el.className = 'toast', 2000);
+}
+
+function toggleAdvanced() {
+  const el = document.getElementById('advancedBtns');
+  const label = el.previousElementSibling || el.parentElement.querySelector('.ctrl-label');
+  if (el.style.display === 'none') {
+    el.style.display = 'flex';
+    label.textContent = '进阶 ▾';
+  } else {
+    el.style.display = 'none';
+    label.textContent = '进阶 ▸';
+  }
+}
+
+// Initial render
+render();
+</script>
+</body>
+</html>

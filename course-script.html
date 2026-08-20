@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git Save Master - 60分钟 Vibe Coding 实践课授课剧本</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, 'Noto Sans CJK SC', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  background: #fafafa;
+  color: #1a1a1a;
+  line-height: 1.7;
+  padding: 2rem 1rem;
+}
+
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+/* 课程信息摘要 */
+.course-header {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  border: 1px solid #eee;
+}
+
+.course-header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #111;
+}
+
+.course-header .subtitle {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.meta-item {
+  background: #f5f5f5;
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+}
+
+.meta-item .label {
+  font-size: 0.75rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.3rem;
+}
+
+.meta-item .value {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #333;
+}
+
+/* 进度条 */
+.progress-bar {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem 2.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  border: 1px solid #eee;
+}
+
+.progress-bar h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 1.2rem;
+}
+
+.timeline {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.timeline-segment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.timeline-segment .bar {
+  height: 8px;
+  border-radius: 4px;
+  margin-bottom: 0.6rem;
+}
+
+.timeline-segment .seg-label {
+  font-size: 0.7rem;
+  color: #888;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.seg-opening .bar { background: #aaa; width: 40px; }
+.seg-act1 .bar { background: linear-gradient(90deg, #4caf50, #81c784); width: 160px; }
+.seg-act2 .bar { background: linear-gradient(90deg, #ef5350, #ef9a9a); width: 200px; }
+.seg-closing .bar { background: #aaa; width: 40px; }
+
+/* 章节 */
+.act {
+  margin-bottom: 2.5rem;
+}
+
+.act-header {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem 2.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  border: 1px solid #eee;
+}
+
+.act-header.opening { border-left: 5px solid #999; }
+.act-header.act1 { border-left: 5px solid #4caf50; }
+.act-header.act2 { border-left: 5px solid #ef5350; }
+.act-header.closing { border-left: 5px solid #999; }
+
+.act-header h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.act-header .act-time {
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 0.2rem;
+}
+
+/* Round 卡片 */
+.round-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem 2.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  border: 1px solid #eee;
+}
+
+.round-card .round-top {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.round-card .round-number {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  background: #333;
+  border-radius: 6px;
+  padding: 0.2rem 0.6rem;
+  letter-spacing: 0.02em;
+}
+
+.round-card .round-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #222;
+}
+
+.round-card .round-time {
+  font-size: 0.8rem;
+  color: #999;
+  margin-left: auto;
+}
+
+/* 对白 */
+.dialogue {
+  margin-bottom: 1.2rem;
+}
+
+.dialogue-line {
+  display: flex;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+  align-items: flex-start;
+}
+
+.speaker-tag {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 0.2rem 0.5rem;
+  margin-top: 0.15rem;
+}
+
+.speaker-green .speaker-tag {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.speaker-red .speaker-tag {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+
+.dialogue-text {
+  font-size: 0.95rem;
+  color: #333;
+  line-height: 1.7;
+}
+
+.speaker-green .dialogue-text {
+  background: #f1f8e9;
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+  border: 1px solid #dcedc8;
+}
+
+.speaker-red .dialogue-text {
+  background: #fce4ec;
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+  border: 1px solid #f8bbd0;
+}
+
+/* 操作指引 & 学员任务 */
+.section-block {
+  margin-top: 1rem;
+  padding: 1rem 1.2rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.operation-guide {
+  background: #f3e5f5;
+  border: 1px solid #e1bee7;
+}
+
+.operation-guide::before {
+  content: "操作指引";
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #7b1fa2;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.student-task {
+  background: #fff3e0;
+  border: 1px solid #ffe0b2;
+}
+
+.student-task::before {
+  content: "学员跟做";
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #e65100;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.section-block ul {
+  padding-left: 1.2rem;
+}
+
+.section-block li {
+  margin-bottom: 0.3rem;
+}
+
+/* 提示框 */
+.tip-box {
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #1565c0;
+}
+
+.tip-box::before {
+  content: "💡 讲师备注";
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+/* 金句 */
+.golden-quote {
+  background: linear-gradient(135deg, #fff9c4, #fff59d);
+  border: 1px solid #fff176;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f57f17;
+  margin: 1.5rem 0;
+}
+
+/* 响应式 */
+@media (max-width: 600px) {
+  body { padding: 1rem 0.5rem; }
+  .course-header, .round-card, .act-header, .progress-bar {
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+  .round-card .round-top { flex-direction: column; gap: 0.3rem; }
+  .round-card .round-time { margin-left: 0; }
+  .timeline { flex-wrap: wrap; gap: 0.5rem; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ====== 课程信息摘要 ====== -->
+<header class="course-header">
+  <h1>Git Save Master</h1>
+  <p class="subtitle">面向设计师的 60 分钟 Vibe Coding 版本管理实践课</p>
+  <div class="meta-grid">
+    <div class="meta-item">
+      <div class="label">讲师</div>
+      <div class="value">小绿（主讲）+ 小红（配合/队友）</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">学员画像</div>
+      <div class="value">专业设计师，零 Git 经验，日常用 TraeWork 做 vibe coding</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">教学工具</div>
+      <div class="value">前半：交互式 Git 可视化沙盒（三明治比喻）<br>后半：真实 GitHub 仓库协作实操</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">核心教学法</div>
+      <div class="value">翻车现场 → 解决方案，双人相声/播客节奏</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">总时长</div>
+      <div class="value">60 分钟</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">课程节奏</div>
+      <div class="value">开场 5' → 沙盒概念建立 20' → GitHub 真实协作 30' → 收尾 5'</div>
+    </div>
+  </div>
+</header>
+
+<!-- ====== 进度条 ====== -->
+<section class="progress-bar">
+  <h2>课程时间轴</h2>
+  <div class="timeline">
+    <div class="timeline-segment seg-opening">
+      <div class="bar"></div>
+      <div class="seg-label">开场<br>5 min</div>
+    </div>
+    <div class="timeline-segment seg-act1">
+      <div class="bar"></div>
+      <div class="seg-label">沙盒概念建立<br>20 min (R0-R4)</div>
+    </div>
+    <div class="timeline-segment seg-act2">
+      <div class="bar"></div>
+      <div class="seg-label">GitHub 真实协作<br>30 min (R5-R9)</div>
+    </div>
+    <div class="timeline-segment seg-closing">
+      <div class="bar"></div>
+      <div class="seg-label">收尾<br>5 min</div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 开场 ====== -->
+<section class="act">
+  <div class="act-header opening">
+    <h2>开场</h2>
+    <div class="act-time">0:00 - 5:00 | 5 分钟</div>
+  </div>
+
+  <div class="round-card">
+    <div class="round-top">
+      <span class="round-number">OPENING</span>
+      <span class="round-title">翻车故事 + 引入概念</span>
+      <span class="round-time">5 min</span>
+    </div>
+
+    <div class="dialogue">
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">大家好！在正式开始之前，我先讲一个我自己的惨痛经历。上周五下午，我跟 agent 一起改一个页面，改了大概两个小时，越改越好看。然后——断网了。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">我重新打开的时候发现……agent 把我之前那版好的代码全覆盖了。两个小时，白干。我当时的表情大概是这样的：🙂（微笑面具下的崩溃）</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">哈哈哈我知道那种感觉！就像你在 Figma 里做了一个超好的方案，结果发现没保存直接关了页面。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">对！但 Figma 至少还有版本历史。代码呢？如果你没做任何准备，那就真的没了。所以今天我们要学的这个东西——Git——本质上就是一个<strong>自动存档系统</strong>。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">想想你打游戏，每过一关是不是要存个档？写代码也一样。每做完一步，存个档。翻车了？读档！就这么简单。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">那我们今天怎么练？不会真的要在终端里敲命令吧？</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">当然不会！我们有一个可视化沙盒——你可以理解为一个"做三明治"的小游戏。左边是你的三明治工作台，你可以加层、删层、换食材；右边是一个树状图，展示你的存档记录。所有概念我们都用做三明治来理解。</span>
+      </div>
+    </div>
+
+    <div class="section-block operation-guide">
+      <ul>
+        <li>打开沙盒工具页面，确认大家都能看到左侧三明治编辑区 + 右侧 Git 树图</li>
+        <li>简单演示：点一下"加一层牛肉"，看看左侧三明治变化</li>
+      </ul>
+    </div>
+
+    <div class="tip-box">
+      开场的核心目标是让学员产生共鸣（"我也遇到过这种事！"），同时把 Git 的心智模型简化为"存档/读档"。不要在这里展开任何技术细节。
+    </div>
+  </div>
+</section>
+
+<!-- ====== 幕一：独自开发 ====== -->
+<section class="act">
+  <div class="act-header act1">
+    <h2>幕一：独自开发</h2>
+    <div class="act-time">5:00 - 25:00 | 20 分钟</div>
+  </div>
+
+  <!-- Round 0 - 建仓库 -->
+  <div class="round-card">
+    <div class="round-top">
+      <span class="round-number">ROUND 0</span>
+      <span class="round-title">建仓库 init / 远端仓库</span>
+      <span class="round-time">3 min | 5:00-8:00</span>
+    </div>
+
+    <div class="dialogue">
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">好，假设我现在要开一个新项目。跟 agent 说"帮我做一个咖啡店官网"，agent 噼里啪啦给我写了一堆代码。但这时候——这些代码没有存档系统！就像你开了一家店但没有账本，赚了多少亏了多少全靠记忆。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">所以第一步是什么？先装一个存档系统？</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">对！在 Git 里这叫 <strong>init</strong>——初始化。你跟 agent 说"帮我初始化一个 Git 仓库"，它就在你的项目里装好了存档系统。从这一刻起，你就可以开始存档了。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">但是！现在这个存档只在你自己电脑上。如果你想备份到云端，或者以后让小红也能参与——你需要在网上建一个"远端仓库"。你可以让 agent 帮你在 GitHub 上建一个。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">GitHub 是什么？</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">你可以理解为"代码界的百度网盘"——一个放代码的云端。你的存档放一份在本地，再推一份到云端。电脑炸了也不怕，云端有备份。以后队友想参与，从云端把项目拉下来就行。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">那我要是加入一个已有的项目呢？比如你已经做好了，我后面才加入。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">那你就 <strong>clone</strong>——把云端的项目完整复制到你本地。就像你入职新公司第一天，从公司网盘把整个项目文件夹下载到自己电脑。这个我们等下到幕二再演示。</span>
+      </div>
+    </div>
+
+    <div class="section-block operation-guide">
+      <ul>
+        <li>在沙盒中展示初始状态（空白/只有初始节点）</li>
+        <li>解释："init 之后就有了这个树图的起点"</li>
+        <li>简要提及 GitHub，不展开操作（学员不需要现在建）</li>
+        <li>用三明治比喻：init = 你决定开一家三明治店，并且买了一个记账本</li>
+      </ul>
+    </div>
+
+    <div class="tip-box">
+      这个环节不用学员动手操作，纯讲解 + 演示。目标是让学员理解"仓库"的概念：本地仓库 = 你的记账本，远端仓库 = 云端备份。实际操作中，agent 会帮你搞定 init 和创建远端仓库。
+    </div>
+  </div>
+
+  <!-- Round 1 -->
+  <div class="round-card">
+    <div class="round-top">
+      <span class="round-number">ROUND 1</span>
+      <span class="round-title">存档 commit</span>
+      <span class="round-time">5 min | 8:00-13:00</span>
+    </div>
+
+    <div class="dialogue">
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">好，现在我来做个三明治。先加一层牛肉……嗯不错，再把原来的芝士换成生菜，健康一点。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">（对着观众）好了做完了！现在大家注意看，我不存档，直接关掉页面——</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">（重新打开）诶？我的牛肉呢？我的生菜呢？全没了！回到了最初的样子。完蛋。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">哈哈哈你这不就是写了半天代码没 save 的感觉吗？</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">对！所以关键来了——做完一步之后，你要点"存档"，Git 里叫 <strong>commit</strong>。存档的时候要写一句话说明你干了什么。比如我这次写："加了牛肉层，把芝士换成生菜"。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">（操作演示）看，右边的树图上多了一个节点！这就是我的第一个存档点。以后不管发生什么事，我都能回到这个点。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">就像游戏里的快速存档？</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">完全正确！而且你可以存无数个档。每做完一步就存一个。这样就算 agent 后面把你的东西搞乱了，你随时能回来。</span>
+      </div>
+    </div>
+
+    <div class="section-block operation-guide">
+      <ul>
+        <li>在沙盒中：添加"牛肉"层，将"芝士"替换为"生菜"</li>
+        <li>不存档 → 刷新页面 → 展示数据丢失</li>
+        <li>重新操作一遍 → 点击"存档 (commit)" → 输入描述信息</li>
+        <li>指着右侧树图，解释"这个圆点就是你的存档"</li>
+      </ul>
+    </div>
+
+    <div class="section-block student-task">
+      <ul>
+        <li>在沙盒里随意编辑三明治（至少改 2 个地方）</li>
+        <li>点击"存档"，写一句话描述你做了什么</li>
+        <li>确认右侧树图出现新节点</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Round 2 -->
+  <div class="round-card">
+    <div class="round-top">
+      <span class="round-number">ROUND 2</span>
+      <span class="round-title">读档 reset</span>
+      <span class="round-time">5 min | 10:00-15:00</span>
+    </div>
+
+    <div class="dialogue">
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">好，我继续改三明治。我觉得……加个榴莲？再加个巧克力酱？哦对了把面包换成年糕！创意爆棚！</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">（皱眉）你这做的是三明治还是暗黑料理……</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">emmm 好像确实有点过了。我想回到刚才那版——就是有牛肉和生菜的那个正常版本。怎么办？</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">读档啊！你刚才存了不是吗？</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">对！在 Git 里这叫 <strong>reset</strong>——时光倒流。我点一下之前那个存档节点……（操作）看！榴莲没了，巧克力没了，年糕也没了。回到了正常的牛肉生菜三明治。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">这就是为什么要频繁存档的原因——你存的档越多，能回退的选择就越多。就跟游戏一样，如果你只在第一关存了档，打到第十关翻车了，你只能回第一关从头来。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">血泪教训。所以做 vibe coding 的时候，你跟 agent 说"帮我存个档"就行了？</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">没错！你甚至可以跟 agent 说"每做完一个功能就自动帮我 commit 一次"。</span>
+      </div>
+    </div>
+
+    <div class="section-block operation-guide">
+      <ul>
+        <li>继续编辑三明治：加一些"奇怪的层"（榴莲、巧克力等）</li>
+        <li>先存一个"暗黑料理版"的档（让学员看到树图上有两个节点）</li>
+        <li>点击之前的存档节点 → 执行 reset</li>
+        <li>展示三明治恢复到之前的状态</li>
+      </ul>
+    </div>
+
+    <div class="section-block student-task">
+      <ul>
+        <li>在之前的三明治上乱改一通（尽情发挥）</li>
+        <li>存个档（记录"暗黑版"）</li>
+        <li>然后 reset 回到上一个正常版本</li>
+        <li>确认三明治恢复了</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Round 3 -->
+  <div class="round-card">
+    <div class="round-top">
+      <span class="round-number">ROUND 3</span>
+      <span class="round-title">开分支 branch</span>
+      <span class="round-time">5 min | 15:00-20:00</span>
+    </div>
+
+    <div class="dialogue">
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">现在我有个新需求——我想同时试两个方向：一个是"日式风味"三明治（三文鱼 + 海苔），另一个是"美式风味"（培根 + 芝士 + BBQ 酱）。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">那你先做完一个再做另一个呗？</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">但我不想丢掉任何一个方向的进度啊。而且做设计的时候你是不是也经常开好几个方案同时探索？Figma 里你会开多个 Frame 对吧？</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">对对对，方案 A、方案 B、方案 C。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">Git 里也有这个功能，叫 <strong>branch</strong>——分支。你从当前这个点"岔"出一条新路。在新路上随便折腾，原来那条路完全不受影响。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">（操作）我现在开一条分支叫"日式风味"……看右边的树图，是不是分叉了？在这条线上我加三文鱼、加海苔。原来的主线上还是牛肉生菜，纹丝不动。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">哦就像平行宇宙！这边的我在吃三文鱼，那边的我在吃牛肉，互不打扰。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">完美的比喻！而且你可以随时切换过去看另一条线的样子。想想 vibe coding 的场景：你让 agent 帮你试一个大改动，但你不确定行不行——那就开个分支让它去试，试坏了也不影响你原来能跑的版本。</span>
+      </div>
+    </div>
+
+    <div class="section-block operation-guide">
+      <ul>
+        <li>从当前节点创建新分支"日式风味"</li>
+        <li>在新分支上编辑：添加三文鱼层、海苔层</li>
+        <li>存档</li>
+        <li>切回主线 → 展示三明治没变</li>
+        <li>指着右侧树图解释"分叉"的含义</li>
+      </ul>
+    </div>
+
+    <div class="section-block student-task">
+      <ul>
+        <li>从当前主线开一条新分支，随便取个名字</li>
+        <li>在新分支上改三明治（至少改 2 处）</li>
+        <li>存档</li>
+        <li>切回主线，确认三明治没变</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Round 4 -->
+  <div class="round-card">
+    <div class="round-top">
+      <span class="round-number">ROUND 4</span>
+      <span class="round-title">合并 merge</span>
+      <span class="round-time">5 min | 20:00-25:00</span>
+    </div>
+
+    <div class="dialogue">
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">好消息！我试了一圈发现日式风味那个三文鱼层特别好吃。我想把它搬回主线里来。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">就像你做了三个设计方案，最后跟客户说"方案 B 的那个配色不错，我拿过来用到方案 A 里"？</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">一模一样！Git 里这个操作叫 <strong>merge</strong>——合并。把另一条分支上的好东西搬回主线。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">（操作）我切到主线，然后告诉 Git："把日式风味合过来"……看！三文鱼出现在主线的三明治里了。右边的树图上，两条线汇合了。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">这也太方便了吧。但如果主线上这个位置已经有东西了呢？</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">好问题！如果主线在这段时间没动过，Git 会直接"快进"把改动搬过来——这叫 fast-forward，像排队时前面的人走了你直接往前挪。但如果主线也改了，Git 就要做一次"真正的合并"，像把两份菜单的优点整合到一起。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">大多数时候 Git 能自动搞定。但如果两边改了同一个位置——那就冲突了。这个我们等会在幕二详细讲。</span>
+      </div>
+    </div>
+
+    <div class="section-block operation-guide">
+      <ul>
+        <li>切到主线（main）</li>
+        <li>执行 merge：合并"日式风味"分支</li>
+        <li>展示合并结果（三文鱼出现在主线三明治中）</li>
+        <li>展示 fast-forward 的树图效果</li>
+        <li>（可选）演示主线有改动时的合并效果</li>
+      </ul>
+    </div>
+
+    <div class="section-block student-task">
+      <ul>
+        <li>切到主线</li>
+        <li>将你之前的实验分支合并回主线</li>
+        <li>确认主线三明治拿到了分支上的改动</li>
+        <li>观察右侧树图的汇合效果</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 幕二：GitHub 真实协作 ====== -->
+<section class="act">
+  <div class="act-header act2">
+    <h2>幕二：GitHub 真实协作实操</h2>
+    <div class="act-time">25:00 - 55:00 | 30 分钟</div>
+  </div>
+
+  <div class="tip-box" style="margin-bottom: 1.5rem;">
+    <strong>切换环节提示</strong>：从这里开始，离开沙盒模拟器，进入真实 GitHub 仓库。讲师提前建好了一个协作仓库，学员现场被邀请为 collaborator，在 TraeWork 里跟 agent 对话完成所有操作。
+  </div>
+
+  <!-- Round 5 -->
+  <div class="round-card">
+    <div class="round-top">
+      <span class="round-number">ROUND 5</span>
+      <span class="round-title">加入项目：clone + 环境搭建</span>
+      <span class="round-time">5 min | 25:00-30:00</span>
+    </div>
+
+    <div class="dialogue">
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">好！概念建立完了，现在来真的。我已经建好了一个 GitHub 仓库，等下会把邀请链接发到群里——大家点接受，就正式成为这个项目的协作者了。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">相当于入职第一天对吧？先领工位、再下载公司项目。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">对！在 TraeWork 里，你只需要跟 agent 说一句话："帮我 clone 这个仓库 [粘贴仓库地址]"。agent 会自动帮你下载整个项目到本地。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">clone 完了大家看一下——是不是跟刚才沙盒里一样？有一个初始版本，有一条 main 分支。刚才在沙盒里看到的那棵树，现在是真的了。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">（带着大家确认）大家都 clone 成功了吗？能看到项目文件了吧？</span>
+      </div>
+    </div>
+
+    <div class="section-block student-task">
+      <ul>
+        <li>接受 GitHub 邀请（群里发链接）</li>
+        <li>在 TraeWork 里跟 agent 说"帮我 clone [仓库地址]"</li>
+        <li>确认项目文件已下载</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Round 6 -->
+  <div class="round-card">
+    <div class="round-top">
+      <span class="round-number">ROUND 6</span>
+      <span class="round-title">独立开发：branch + commit + push + MR</span>
+      <span class="round-time">10 min | 30:00-40:00</span>
+    </div>
+
+    <div class="dialogue">
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">好，现在每个人都要做一件事：给这个项目加点自己的东西。但！还记得我们刚才说的吗？不要直接改 main。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">在营业中的店里装修会吓跑客人！</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">所以第一步：跟 agent 说"帮我开一个新分支，叫 feature/我的名字"。比如 feature/xiaoming。这样你的改动就在旁边的一条线上，不影响 main。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">然后——随便改点什么。改个标题、加一段文字、换个颜色——你说了算，agent 帮你写。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">改完了记得说什么？</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">"帮我存个档，备注'加了 xxx'"！然后"帮我 push 到远端"。这样你的改动就上传到 GitHub 了。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">最后一步——去 GitHub 上提一个 <strong>MR</strong>。你可以跟 agent 说"帮我创建一个 Pull Request，合并到 main"。这样队友就能看到你改了什么。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">我先来演示一遍！（实操演示完整流程）</span>
+      </div>
+    </div>
+
+    <div class="section-block student-task">
+      <ul>
+        <li>跟 agent 说"帮我开一个分支叫 feature/你的名字"</li>
+        <li>让 agent 帮你做一处修改（自由发挥）</li>
+        <li>"帮我存个档，备注'改了 xxx'"</li>
+        <li>"帮我 push 到远端"</li>
+        <li>"帮我创建一个 Pull Request 合并到 main"</li>
+      </ul>
+    </div>
+
+    <div class="tip-box">
+      这是学员第一次真实操作 Git 全流程。节奏要慢，每一步等大家都完成再进入下一步。讲师可以投屏 GitHub 页面，让大家看到 PR 被创建的样子。
+    </div>
+  </div>
+
+  <!-- Round 7 -->
+  <div class="round-card">
+    <div class="round-top">
+      <span class="round-number">ROUND 7</span>
+      <span class="round-title">Code Review + 合并</span>
+      <span class="round-time">5 min | 40:00-45:00</span>
+    </div>
+
+    <div class="dialogue">
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">好，现在我打开 GitHub 看看——哇！你们提了一堆 PR 上来！（投屏展示 PR 列表）</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">我来当主厨！让我看看你们的三明治——啊不是，你们的代码。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">大家看这个界面——左边绿色的是新增的内容，红色的是删掉的。这就是 <strong>diff</strong>，跟我们沙盒里的三明治 diff 一模一样。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">（Review 某个 PR）嗯，这个同学加了一段很好看的样式——我 approve 了！点"Merge"——合进 main 了！</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">看到了吗？从分支到 MR 到 Review 到合并——这就是一个完整的协作闭环。每一步都有记录，谁改了什么一目了然。</span>
+      </div>
+    </div>
+
+    <div class="section-block operation-guide">
+      <ul>
+        <li>投屏 GitHub PR 页面，现场 Review 2-3 个学员的 PR</li>
+        <li>展示 diff 视图，跟沙盒里的三明治 diff 做类比</li>
+        <li>现场合并 1-2 个 PR 让大家看到效果</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Round 8 -->
+  <div class="round-card">
+    <div class="round-top">
+      <span class="round-number">ROUND 8</span>
+      <span class="round-title">冲突实战：真实 conflict</span>
+      <span class="round-time">7 min | 45:00-52:00</span>
+    </div>
+
+    <div class="dialogue">
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">刚才大家改的是不同的文件，所以合并顺利。但现在——我要故意制造一次冲突！</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">来了来了，翻车现场！</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">我现在让两个同学改同一个文件的同一行——比如首页的标题。张三把标题改成"早安咖啡"，李四把标题改成"午后拿铁"。两个人都 push 了自己的分支，都提了 MR。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">我先合了张三的——没问题。现在合李四的——</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">（看屏幕）啊！GitHub 说"有冲突，不能自动合并"！</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">跟沙盒里一模一样！因为两个人改了同一个位置——标题这一行。Git 不知道该用"早安咖啡"还是"午后拿铁"。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">解决方法？跟 agent 说"帮我解决冲突，用我的版本"或者"把两个都保留"。agent 会帮你处理那些奇怪的冲突标记。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">所以冲突不可怕——跟沙盒里练的一样，就是 Git 在问你"留哪个"。现实中你让 agent 帮你解决就行。</span>
+      </div>
+    </div>
+
+    <div class="section-block student-task">
+      <ul>
+        <li>观看讲师演示真实冲突</li>
+        <li>有余力的同学：两两配对，故意改同一行，触发冲突，用 agent 解决</li>
+        <li>跟 agent 说"帮我 pull 最新的 main，如果有冲突就用我的版本"</li>
+      </ul>
+    </div>
+
+    <div class="tip-box">
+      如果时间紧张，这一轮可以只做讲师演示，不让每个学员都触发冲突。重点是让学员"见过"冲突长什么样，知道不可怕。
+    </div>
+  </div>
+
+  <!-- Round 9 -->
+  <div class="round-card">
+    <div class="round-top">
+      <span class="round-number">ROUND 9</span>
+      <span class="round-title">.gitignore + 分支保护 + 小流量</span>
+      <span class="round-time">3 min | 52:00-55:00</span>
+    </div>
+
+    <div class="dialogue">
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">快问快答收尾！三个小知识点。第一：有些文件不该被 Git 管——密码文件、临时文件、本地配置。怎么办？</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">告诉 Git "别管这些"？</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">对！有个文件叫 <strong>.gitignore</strong>，里面列的东西 Git 会假装看不见。跟 agent 说"帮我把 .env 加到 gitignore"就行了。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">第二：<strong>分支保护</strong>——在 GitHub 设置里可以锁住 main 分支，强制所有人必须走 MR 才能合并。这样就不会有人手滑直接 push 到线上了。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">第三：<strong>小流量/灰度</strong>——你做好了新功能，不一定要直接全量上线。可以先让一小部分用户试试。跟 agent 说"帮我加个 feature flag"，它就知道怎么做。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">三明治新方案先在一个窗口卖卖看！</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">完美比喻！这三个不用现在记住操作，只要知道"有这个东西"，以后遇到了你知道可以问 agent。</span>
+      </div>
+    </div>
+
+    <div class="section-block operation-guide">
+      <ul>
+        <li>展示 GitHub 仓库设置里的 Branch protection rules 界面</li>
+        <li>展示 .gitignore 文件内容（可以在仓库里打开给大家看）</li>
+        <li>这一轮纯讲解，不需要学员操作</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 收尾 ====== -->
+<section class="act">
+  <div class="act-header closing">
+    <h2>收尾</h2>
+    <div class="act-time">55:00 - 60:00 | 5 分钟</div>
+  </div>
+
+  <div class="round-card">
+    <div class="round-top">
+      <span class="round-number">ENDING</span>
+      <span class="round-title">回顾 + 金句 + 彩蛋</span>
+      <span class="round-time">5 min</span>
+    </div>
+
+    <div class="dialogue">
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">好！一个小时过去了，快速回顾。跟 agent 做 vibe coding，Git 方面你只需要会说这几句话：</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">来，我来数——</span>
+      </div>
+    </div>
+
+    <div class="golden-quote">
+      "帮我存个档" → commit<br>
+      "帮我回到上一版" → reset<br>
+      "帮我开个新分支试试" → branch<br>
+      "帮我合回主线" → merge<br>
+      "帮我推到远端" → push<br>
+      "帮我同步最新版本" → pull<br>
+      "帮我提个 MR" → Pull Request
+    </div>
+
+    <div class="dialogue">
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">七句话，覆盖 90% 的日常场景。不用记命令，agent 全帮你搞定。但你得知道什么时候该说哪句话——这就是今天建立的"心智模型"。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">最后一个彩蛋——今天的三明治沙盒模拟器，大家回去可以继续玩！链接会发到群里。</span>
+      </div>
+      <div class="dialogue-line speaker-green">
+        <span class="speaker-tag">小绿</span>
+        <span class="dialogue-text">如果你今天只记住一句话——那就是："每做完一步，跟 agent 说'帮我存个档'。" 这一句话，能救你无数次。</span>
+      </div>
+      <div class="dialogue-line speaker-red">
+        <span class="speaker-tag">小红</span>
+        <span class="dialogue-text">今天的课就到这里！大家去做三明治吧！——啊不是，去做 vibe coding 吧！</span>
+      </div>
+    </div>
+
+    <div class="section-block operation-guide">
+      <ul>
+        <li>投屏展示"七句话"清单</li>
+        <li>分享三明治沙盒链接</li>
+        <li>如有时间：现场 Q&A 5 分钟</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ====== 页脚 ====== -->
+<footer style="text-align: center; padding: 3rem 0 2rem; color: #bbb; font-size: 0.8rem;">
+  Git Save Master - Vibe Coding 实践课授课剧本 v2.0
+</footer>
+
+</div>
+</body>
+</html>
