@@ -1979,6 +1979,37 @@ class GitSystem {
     return id;
   }
 
+  resolveConflictForTeammate(strategy, conflictInfo) {
+    const repo = this.teammate;
+    const branch = repo.currentBranch() || 'main';
+    const lid = repo.branches.get(branch);
+    const rid = repo.remoteRefs.get('origin/' + branch);
+    const id = repo._id();
+    let msg, recipe;
+
+    const localRecipe = conflictInfo ? conflictInfo.localRecipe : [...INITIAL_RECIPE];
+    const remoteRecipe = conflictInfo ? conflictInfo.remoteRecipe : [...INITIAL_RECIPE];
+    const conflicts = conflictInfo ? conflictInfo.conflicts : [];
+
+    if (strategy === 'mine') {
+      msg = '合并(保留我的)';
+      recipe = [...localRecipe];
+    } else if (strategy === 'theirs') {
+      msg = '合并(保留对方)';
+      recipe = [...remoteRecipe];
+    } else {
+      msg = '合并';
+      recipe = [...(conflictInfo ? conflictInfo.mergedRecipe : localRecipe)];
+      for (const c of conflicts) {
+        recipe[c.index] = c.ours !== undefined ? c.ours : c.theirs;
+      }
+    }
+
+    repo.commits.set(id, { id, msg, parents: [lid, rid], recipe, author: '小红' });
+    repo.branches.set(branch, id);
+    return id;
+  }
+
   teammateCommit() {
     const other = this.teammate;
     const branch = other.currentBranch() || 'main';
@@ -2172,6 +2203,24 @@ class UnifiedRenderer {
       const container = this.svg.parentElement;
       const emptyGuide = container.querySelector('.empty-guide');
       if (emptyGuide) emptyGuide.style.display = 'none';
+    }
+
+    // Compute max text width per node to prevent overlap on same-level lanes
+    const levelMap = new Map(); // y -> [nodes sorted by x]
+    for (const n of visibleNodes) {
+      if (!levelMap.has(n.y)) levelMap.set(n.y, []);
+      levelMap.get(n.y).push(n);
+    }
+    for (const [, group] of levelMap) {
+      group.sort((a, b) => a.x - b.x);
+      for (let i = 0; i < group.length; i++) {
+        if (i < group.length - 1) {
+          // Not the rightmost node on this level: limit text width
+          group[i]._maxTextWidth = group[i + 1].x - group[i].x - this.R * 2 - 18;
+        } else {
+          group[i]._maxTextWidth = null; // no limit for rightmost
+        }
+      }
     }
 
     for (const n of visibleNodes) {
@@ -2371,7 +2420,7 @@ class UnifiedRenderer {
       g.appendChild(mc);
     }
 
-    // Commit message text
+    // Commit message text (truncate if constrained by sibling nodes on same level)
     const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     t.setAttribute('x', n.x + this.R + 8); t.setAttribute('y', n.y);
     t.setAttribute('text-anchor', 'start');
@@ -2379,7 +2428,21 @@ class UnifiedRenderer {
     t.setAttribute('fill', 'oklch(0.27 0.012 95)');
     t.setAttribute('font-size', '11.5'); t.setAttribute('font-weight', '500');
     t.setAttribute('font-family', '-apple-system, sans-serif');
-    t.textContent = n.msg;
+    let displayMsg = n.msg;
+    if (n._maxTextWidth != null && n._maxTextWidth > 0) {
+      // Truncate message to fit within the available width
+      const maxW = n._maxTextWidth;
+      let w = 0;
+      let truncIdx = displayMsg.length;
+      for (let i = 0; i < displayMsg.length; i++) {
+        w += displayMsg.charCodeAt(i) > 127 ? 11.5 : 11.5 * 0.6;
+        if (w > maxW - 12) { truncIdx = i; break; }
+      }
+      if (truncIdx < displayMsg.length) {
+        displayMsg = displayMsg.slice(0, truncIdx) + '...';
+      }
+    }
+    t.textContent = displayMsg;
     g.appendChild(t);
 
     // Hit area for hover
@@ -2398,9 +2461,17 @@ class UnifiedRenderer {
 
   _labels(n, localRepo, remoteRepo) {
     if (n.isUnreachable) return;
-    // Calculate offset after commit text
-    const msgWidth = this._textWidth(n.msg, 11) + 6;
+    // Calculate offset after commit text (use truncated width if constrained)
+    let displayMsgWidth;
+    if (n._maxTextWidth != null && n._maxTextWidth > 0) {
+      displayMsgWidth = Math.min(this._textWidth(n.msg, 11), n._maxTextWidth);
+    } else {
+      displayMsgWidth = this._textWidth(n.msg, 11);
+    }
+    const msgWidth = displayMsgWidth + 6;
     let ox = this.R + 8 + msgWidth + 6;
+    // If constrained, check if there's room for labels at all
+    const maxTotalWidth = n._maxTextWidth != null ? n._maxTextWidth : Infinity;
     const labels = [];
 
     for (const b of n.brLabels) {
@@ -2432,6 +2503,8 @@ class UnifiedRenderer {
 
     for (const lb of labels) {
       const tw = this._textWidth(lb.t, 8) + 12;
+      // Skip label if it would overflow into the next lane's node
+      if (ox + tw > maxTotalWidth + this.R + 8) break;
       const ax = n.x + ox;
       const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
       rect.setAttribute('x', ax); rect.setAttribute('y', n.y - 7);
@@ -3529,30 +3602,35 @@ function showConflictDialog(conflictResult) {
     recipeHtml = `
       <div class="recipe-compare">
         <div class="side">
-          <div class="side-label">小蓝的汉堡</div>
+          <div class="side-label">${myLabel}的汉堡</div>
           <div class="sandwich-preview">${localHtml}</div>
         </div>
         <div class="side">
-          <div class="side-label">小红的汉堡</div>
+          <div class="side-label">${theirLabel}的汉堡</div>
           <div class="sandwich-preview">${remoteHtml}</div>
         </div>
       </div>`;
   }
 
+  const myLabel = currentChef === 'red' ? '小红' : '小蓝';
+  const theirLabel = currentChef === 'red' ? '小蓝' : '小红';
+
   dl.innerHTML = `
     <h3>合并冲突</h3>
-    <p>小蓝和小红都修改了同一层食材。${hasRecipeConflict ? `${conflictResult.conflicts.length} 层冲突（红框标出）：` : 'Git 无法自动合并，需要你决定怎么处理：'}</p>
+    <p>${myLabel}和${theirLabel}都修改了同一层食材。${hasRecipeConflict ? `${conflictResult.conflicts.length} 层冲突（红框标出）：` : 'Git 无法自动合并，需要你决定怎么处理：'}</p>
     ${recipeHtml}
     <div class="dialog-btns" style="flex-direction:column;align-items:stretch;">
-      <button class="btn" onclick="resolveConflict('mine')">保留小蓝的</button>
-      <button class="btn" onclick="resolveConflict('theirs')">保留小红的</button>
+      <button class="btn" onclick="resolveConflict('mine')">保留${myLabel}的</button>
+      <button class="btn" onclick="resolveConflict('theirs')">保留${theirLabel}的</button>
       <button class="btn active" onclick="resolveConflict('both')">合并两者</button>
     </div>`;
   ov.classList.add('show');
 }
 
 function resolveConflict(strategy) {
-  const id = sys.resolveConflict(strategy, pendingConflictInfo);
+  const id = currentChef === 'red'
+    ? sys.resolveConflictForTeammate(strategy, pendingConflictInfo)
+    : sys.resolveConflict(strategy, pendingConflictInfo);
   pendingConflictInfo = null;
   resetWorkingRecipe();
   closeDialog();
