@@ -3,226 +3,722 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Git 可视化沙盒</title>
+<title>Git 概念厨房</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M15 55h70v8c0 4-3 7-7 7H22c-4 0-7-3-7-7v-8z' fill='%23D2691E'/><rect x='20' y='50' width='60' height='5' rx='2' fill='%2332CD32'/><rect x='18' y='42' width='64' height='10' rx='3' fill='%23CD853F'/><path d='M15 45c0-18 15-30 35-30s35 12 35 30H15z' fill='%23F4A460'/><circle cx='35' cy='35' r='2' fill='%23FFF5E1'/><circle cx='55' cy='30' r='2' fill='%23FFF5E1'/><circle cx='70' cy='38' r='2' fill='%23FFF5E1'/></svg>">
 <style>
+@font-face {
+  font-family: 'Handwritten';
+  src: url('fonts/NothingYouCouldDo-Regular.ttf') format('truetype');
+  font-weight: 400;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+:root {
+  --font-hand: 'Handwritten', cursive;
+  --bg: #F3EBE0;
+  --surface: oklch(0.996 0.002 95);
+  --border: oklch(0.908 0.005 95);
+  --border-strong: oklch(0.80 0.008 95);
+  --text: oklch(0.27 0.012 95);
+  --text-2: oklch(0.47 0.01 95);
+  --text-3: oklch(0.64 0.008 95);
+  --accent: oklch(0.52 0.12 65);
+  --accent-soft: oklch(0.955 0.035 80);
+  --green: oklch(0.58 0.15 152);
+  --green-soft: oklch(0.965 0.022 152);
+  --red: oklch(0.55 0.19 27);
+  --red-soft: oklch(0.955 0.025 27);
+  --amber: oklch(0.66 0.14 72);
+  --amber-soft: oklch(0.965 0.035 88);
+  --bread-bg: oklch(0.955 0.05 90);
+  --bread-border: oklch(0.78 0.10 75);
+  --radius: 0;
+  --shadow-sm: 0 1px 2px oklch(0.3 0.01 95 / 0.06);
+  --shadow-md: 0 4px 16px oklch(0.3 0.01 95 / 0.10);
+}
+
+* { border-radius: 0 !important; }
+.capsule-btn { border-radius: 80px !important; }
+.add-layer-btn { border-radius: 50% !important; }
+.layer-btn { border-radius: 50% !important; }
+.fail-toggle input[type="range"] { border-radius: 20px !important; }
+.fail-toggle input[type="range"]::-webkit-slider-thumb { border-radius: 50% !important; }
+.fail-toggle input[type="range"]::-moz-range-thumb { border-radius: 50% !important; }
+
+html {
+  font-size: 16px;
+}
+html, body {
+  height: 100vh;
+  overflow: hidden;
+}
+
 body {
-  font-family: -apple-system, 'Segoe UI', 'Noto Sans CJK SC', sans-serif;
-  background: #fafafa;
-  color: #1a1a1a;
-  min-height: 100vh;
+  font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Noto Sans CJK SC', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--bg);
+  color: var(--text);
   display: flex;
   flex-direction: column;
 }
 
-.header {
-  padding: 0.7rem 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
+.top-container {
+  background: white;
+  padding: 20px 12px;
   display: flex;
-  align-items: baseline;
-  gap: 0.8rem;
+  flex-direction: column;
+  gap: 20px;
 }
-.header h1 { font-size: 0.9rem; font-weight: 600; }
-.header .sub { font-size: 0.72rem; color: #888; }
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.header h1 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+/* Handwritten subtitle style */
+.hand-label {
+  font-family: var(--font-hand);
+  font-size: 0.82rem;
+  color: var(--accent);
+  display: inline-block;
+  transform: rotate(-1.5deg);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+/* Sketch underline - applied via .sketch-underline class */
+.sketch-underline {
+  position: relative;
+  display: inline-block;
+}
+.sketch-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: -2px;
+  right: -2px;
+  height: 8px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='14' fill='none'%3E%3Cpath d='M2 9 C40 5, 80 10, 120 7 S200 4, 250 8 S280 6, 298 7' stroke='%235A01FF' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M4 5 C50 9, 100 4, 150 8 S220 5, 270 9 S290 5, 296 7' stroke='%235A01FF' stroke-width='2' stroke-linecap='round' opacity='0.55'/%3E%3Cpath d='M6 11 C45 7, 95 11, 145 8 S210 10, 260 7 S288 9, 297 8' stroke='%235A01FF' stroke-width='1.2' stroke-linecap='round' opacity='0.3'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  z-index: -1;
+}
+/* Mark key text with hand-drawn underline */
+mark.sketch-mark {
+  background: none;
+  color: inherit;
+  font-weight: 700;
+  position: relative;
+  display: inline;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='12' fill='none' preserveAspectRatio='none'%3E%3Cpath d='M1 7 C30 4, 60 9, 100 5 S150 8, 180 5 S195 7, 199 6' stroke='%235A01FF' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M2 4 C40 8, 80 3, 120 7 S160 4, 190 7 S198 5, 199 6' stroke='%235A01FF' stroke-width='2' stroke-linecap='round' opacity='0.55'/%3E%3Cpath d='M3 9 C35 6, 75 10, 115 7 S155 9, 185 6 S197 8, 199 7' stroke='%235A01FF' stroke-width='1.2' stroke-linecap='round' opacity='0.3'/%3E%3C/svg%3E");
+  background-position: bottom left;
+  background-size: 100% 7px;
+  background-repeat: no-repeat;
+  padding-bottom: 3px;
+}
+/* Yellow variant of sketch underline */
+.sketch-underline-yellow {
+  position: relative;
+  display: inline-block;
+}
+.sketch-underline-yellow::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: -2px;
+  right: -2px;
+  height: 8px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='14' fill='none'%3E%3Cpath d='M2 9 C40 5, 80 10, 120 7 S200 4, 250 8 S280 6, 298 7' stroke='%23c68206' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M4 5 C50 9, 100 4, 150 8 S220 5, 270 9 S290 5, 296 7' stroke='%23c68206' stroke-width='2' stroke-linecap='round' opacity='0.55'/%3E%3Cpath d='M6 11 C45 7, 95 11, 145 8 S210 10, 260 7 S288 9, 297 8' stroke='%23c68206' stroke-width='1.2' stroke-linecap='round' opacity='0.3'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  z-index: -1;
+}
+.header-right {
+  margin-left: auto;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.capsule-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.35rem 1rem;
+  border: 2px solid var(--text);
+  border-radius: 80px;
+  background: white;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  white-space: nowrap;
+  height: 29px;
+}
+.capsule-btn.no-border {
+  background: #F3EBE0;
+  border: none;
+}
+.capsule-btn:hover { background: oklch(0.94 0.005 95); }
+.capsule-btn.no-border:hover { background: oklch(0.92 0.02 80); }
+.capsule-btn:active { transform: scale(0.96); }
+
+/* Action bar */
+.action-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: 100%;
+}
+.action-bar .btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: left;
+  background: var(--surface);
+  color: var(--text);
+  border: 0.5px solid #bfbeb8;
+  border-radius: 0;
+  font-size: 0.73rem;
+  padding: 12px;
+  gap: 1px;
+  white-space: normal;
+  transition: background 0.15s, transform 0.1s;
+}
+.action-bar .btn:last-child { border-color: #c68206; }
+.action-bar .btn:hover {
+  background: oklch(0.95 0.006 95);
+}
+.action-bar .btn:active {
+  transform: scale(0.97);
+}
+.action-bar .btn:first-child {
+  background: #282620;
+  color: white;
+  border-color: #282620;
+}
+.action-bar .btn:first-child:hover {
+  background: oklch(0.22 0.012 95);
+}
+.action-bar .btn:last-child {
+  background: #c68206;
+  color: white;
+}
+.action-bar .btn:last-child:hover {
+  background: oklch(0.58 0.15 68);
+}
+.action-bar .btn .btn-zh {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.action-bar .btn .btn-en {
+  font-size: 0.65rem;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+/* 768px rules moved to bottom responsive section */
+
+/* Chef switcher (bottom of left panel) */
+.chef-switcher {
+  position: relative;
+  background: transparent;
+  border-top: none;
+  padding: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  overflow: visible;
+  flex-shrink: 0;
+  height: 80px;
+  margin-bottom: -12px;
+}
+.chef-switcher .chef-avatar {
+  width: 80px;
+  height: 115px;
+  object-fit: contain;
+  object-position: bottom center;
+  border-radius: 0;
+  border: none;
+  position: absolute;
+  bottom: -30px;
+  left: 0;
+  z-index: 2;
+  transform: scaleX(-1);
+}
+@keyframes chef-pop {
+  0% { transform: scaleX(-1) scale(1); }
+  40% { transform: scaleX(-1) scale(1.12); }
+  100% { transform: scaleX(-1) scale(1); }
+}
+@keyframes chef-pop-red {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.chef-switcher .chef-avatar.pop {
+  animation: chef-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.chef-switcher .chef-avatar.active-red {
+  border: none;
+  transform: none;
+  left: 8px;
+}
+.chef-switcher .chef-avatar.active-red.pop {
+  animation: chef-pop-red 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.chef-switcher .switch-label {
+  background: var(--text);
+  color: white;
+  padding: 5.5px 12px 5.5px 22px;
+  border-radius: 0;
+  font-size: 0.68rem;
+  user-select: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.12s, transform 0.2s ease;
+  position: absolute;
+  bottom: 10px;
+  left: 64px;
+  z-index: 1;
+  white-space: nowrap;
+}
+.chef-switcher .switch-label:hover { opacity: 0.85; }
+.chef-switcher .chef-name {
+  display: none;
+}
+
+/* Fail rate toggle in panel header */
+.panel-header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.9rem;
+}
+.panel-header-row .panel-title {
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--text);
+}
+.panel-header-row .fail-toggle {
+  margin-left: auto;
+}
+
+.fail-toggle-card {
+  background: white;
+  height: 45px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
 
 .main-layout {
   flex: 1;
   display: flex;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
+  padding: 20px;
+  gap: 10px;
 }
 
 /* Left panel */
 .left-panel {
-  width: 220px;
-  min-width: 220px;
-  border-right: 1px solid #e0e0e0;
-  padding: 1rem 0.8rem;
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
-  overflow-y: auto;
-  background: #fcfcfc;
+  overflow: visible;
+  background: transparent;
 }
 .panel-section {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.35rem;
+  padding: 0.75rem 0.9rem;
 }
+.panel-section + .panel-section { }
 .panel-label {
-  font-size: 0.62rem;
-  color: #999;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--text-3);
+  letter-spacing: 0.04em;
 }
 .panel-branch {
   font-size: 0.85rem;
-  font-weight: 600;
-  color: #2563eb;
+  font-weight: 650;
+  color: var(--accent);
 }
 
 /* Sandwich display in left panel */
 .sandwich-view {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0;
-  margin: 0.3rem 0;
+  margin: 0 auto;
+  padding: 0;
+  width: 100%;
+  max-width: 260px;
+  transform-origin: top center;
 }
 .sandwich-bread {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  background: #fef3c7;
-  border: 1px solid #f59e0b;
-  border-radius: 6px;
-  font-size: 0.78rem;
-  color: #92400e;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: none;
+  flex-shrink: 0;
+  width: 100%;
+  position: relative;
+}
+.sandwich-bread .sprite-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.sandwich-bread:first-child {
+  margin-bottom: -10%;
 }
 .sandwich-bread .bread-emoji { font-size: 1.2rem; }
-.sandwich-bread .bread-label { font-size: 0.68rem; color: #92400e; }
+.sandwich-bread .bread-label { font-size: 0.68rem; }
+
+/* Sprite layer image */
+.sprite-img {
+  width: 100%;
+  height: auto;
+}
 
 .sandwich-layer {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 8px;
-  margin: 1px 0;
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  border-radius: 4px;
+  justify-content: center;
+  position: relative;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
   font-size: 0.78rem;
-  transition: background 0.1s;
+  transition: box-shadow 0.12s;
+  flex-shrink: 0;
+  width: 100%;
+  overflow: visible;
 }
-.sandwich-layer:hover { background: #f8f8f8; }
+.sandwich-layer:hover { background: transparent; z-index: 99 !important; }
+.sandwich-layer:hover .sprite-img {
+  filter: drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff);
+  transition: filter 0.15s;
+}
 .sandwich-layer .layer-emoji { font-size: 1.1rem; }
-.sandwich-layer .layer-name { flex: 1; font-size: 0.72rem; color: #333; }
+.sandwich-layer .layer-name { display: none; }
+.sandwich-layer .sprite-img { width: 100%; height: auto; display: block; margin-top: -8%; margin-bottom: -8%; }
 .sandwich-layer .layer-actions {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   gap: 3px;
+  opacity: 0;
+  transition: opacity 0.15s;
 }
+.sandwich-layer:hover .layer-actions { opacity: 1; }
 .layer-btn {
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
   cursor: pointer;
-  font-size: 0.65rem;
-  color: #666;
-  transition: all 0.1s;
+  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
-.layer-btn:hover { border-color: #999; color: #333; }
-.layer-btn.delete:hover { border-color: #d32f2f; color: #d32f2f; }
+.layer-btn img {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.layer-btn:hover { background: var(--bg); border-color: var(--text-2); box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
+.layer-btn.delete:hover { background: var(--red-soft); border-color: var(--red); }
 
 .add-layer-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  background: white;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  margin: 32px auto -20px auto;
+  font-size: 0;
+  color: var(--text);
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.12s;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+.add-layer-btn img {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+.add-layer-btn:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.13); transform: scale(1.05); }
+.add-layer-btn:active { transform: scale(0.95); }
+
+.add-layer-row {
+  display: flex;
+  gap: 4px;
+}
+.add-layer-row .add-layer-btn { flex: 1; }
+.ai-layer-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 5px 8px;
   margin: 2px 0;
-  background: #f0fdf4;
-  border: 1px dashed #86efac;
-  border-radius: 4px;
+  background: var(--surface);
+  border: 1px dashed var(--border-strong);
+  border-radius: 5px;
   font-size: 0.7rem;
-  color: #16a34a;
+  color: var(--text-2);
   cursor: pointer;
-  transition: all 0.1s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
 }
-.add-layer-btn:hover { background: #dcfce7; border-color: #22c55e; }
+.ai-layer-btn:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+.sandwich-layer.bad {
+  background: none;
+  border: none;
+}
+.sandwich-layer.bad .layer-name { color: var(--red); }
 
 .diff-summary {
-  font-size: 0.72rem;
-  color: #666;
-  padding: 6px 8px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  margin-top: 6px;
-  line-height: 1.6;
-  font-family: 'SF Mono', 'Menlo', monospace;
+  font-size: 0.78rem;
+  color: var(--text-2);
+  padding: 0.8rem 1rem;
+  background: oklch(0.955 0.02 80);
+  border-radius: 10px;
+  margin: 0.6rem 0.9rem;
+  line-height: 1.8;
+  font-family: -apple-system, 'PingFang SC', sans-serif;
+  position: sticky;
+  bottom: 0.6rem;
 }
-.diff-summary .added { color: #16a34a; font-weight: 500; }
-.diff-summary .removed { color: #d32f2f; font-weight: 500; }
-.diff-summary .modified { color: #d97706; font-weight: 500; }
+.diff-summary:empty { display: none; }
+.diff-summary .added { color: var(--green); font-weight: 500; }
+.diff-summary .removed { color: var(--red); font-weight: 500; }
+.diff-summary .modified { color: var(--amber); font-weight: 500; }
+.diff-summary .discard-btn {
+  font-size: 0.65rem;
+  padding: 2px 10px;
+  background: var(--surface);
+  border: 1px solid var(--red);
+  color: var(--red);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.diff-summary .discard-btn:hover {
+  background: var(--red);
+  color: #fff;
+}
 
-.panel-message {
-  font-size: 0.72rem;
-  color: #555;
-  line-height: 1.4;
-  word-break: break-all;
-}
-.panel-sync {
-  font-size: 0.72rem;
-  color: #666;
+.panel-publish { font-size: 0.72rem; display: flex; flex-direction: row; gap: 12px; align-items: stretch; }
+.publish-row {
   display: flex;
-  gap: 0.5rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-2);
+  flex: 1;
+  min-width: 0;
 }
-.panel-sync .ahead { color: #d97706; }
-.panel-sync .behind { color: #2563eb; }
-.panel-sync .synced { color: #16a34a; }
+.publish-row .publish-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.publish-row .publish-sandwich {
+  border: 1px solid var(--border);
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  flex: 1;
+}
+.publish-row.live .publish-label { color: var(--green); }
+.publish-row.canary .publish-label { color: var(--amber); }
+.publish-row.bad .publish-label { color: var(--red); }
+.publish-row .publish-sandwich .mini-burger {
+  width: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.publish-row .publish-sandwich .mini-bread {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  position: relative;
+}
+.publish-row .publish-sandwich .mini-bread.top {
+  margin-bottom: -10%;
+}
+.publish-row .publish-sandwich .mini-layer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  position: relative;
+}
+.publish-row .publish-sandwich .mini-layer img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  margin-top: -8%;
+  margin-bottom: -8%;
+}
+.publish-row .publish-sandwich .empty-text {
+  font-size: 0.68rem;
+  color: var(--text-3);
+  padding: 12px 0;
+}
+.publish-row strong { font-weight: 650; }
+.fail-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; font-size: 13px; padding: 4px 10px; border: none; background: white; transition: all 0.15s; height: 29px; }
+.fail-toggle input[type="range"] { -webkit-appearance: none; appearance: none; width: 112px; height: 14px; cursor: pointer; background: #f3ebe0; border-radius: 20px !important; outline: none; }
+.fail-toggle input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #d4940e; border: 2.5px solid #282620; box-shadow: none; cursor: pointer; }
+.fail-toggle input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #d4940e; border: 2.5px solid #282620; box-shadow: none; cursor: pointer; }
+.fail-label { color: #1a1a1a; font-weight: 400; font-size: 13px; }
+.fail-rate-label { color: #1a1a1a; font-size: 13px; font-weight: 400; min-width: 36px; text-align: right; }
 
 /* Ingredient selector popover */
 .ingredient-selector {
   position: fixed;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
   padding: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  box-shadow: var(--shadow-md);
   z-index: 80;
   display: none;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
 }
-.ingredient-selector.show { display: block; }
+.ingredient-selector.show { display: grid; }
 .ingredient-selector .ing-option {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 8px;
-  margin: 2px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: 5px;
   cursor: pointer;
   font-size: 0.72rem;
-  border: 1px solid #e8e8e8;
-  transition: all 0.1s;
+  border: 1px solid var(--border);
+  transition: background 0.12s, border-color 0.12s;
+  white-space: nowrap;
 }
 .ingredient-selector .ing-option:hover {
-  background: #f0f9ff;
-  border-color: #2563eb;
+  background: var(--accent-soft);
+  border-color: var(--accent);
 }
 
 /* Right area */
 .graph-container {
   flex: 1;
-  overflow: auto;
-  padding: 0.5rem;
+  overflow-y: auto;
+  padding: 0;
   min-height: 0;
   position: relative;
-}
-.graph-container svg { display: block; }
-
-.controls {
-  border-top: 1px solid #e0e0e0;
-  padding: 0.7rem 1.2rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-  align-items: flex-start;
-}
-.ctrl-group {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  background: white;
 }
-.ctrl-label {
-  font-size: 0.6rem;
-  color: #999;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.graph-panel-header {
+  padding: 0.6rem 0.9rem;
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--text);
+  flex-shrink: 0;
+  font-family: var(--font-hand);
 }
+.graph-content {
+  flex: 1;
+  overflow: auto;
+  padding: 0.5rem;
+  position: relative;
+  display: flex;
+}
+.graph-content svg { margin: auto; }
+.graph-container svg { display: block; }
+
+/* Clone guide overlay in right panel */
+.clone-guide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  gap: 0.8rem;
+  padding: 2rem;
+  text-align: center;
+}
+.clone-guide.empty-guide {
+  position: absolute;
+  inset: 0;
+  background: white;
+}
+.clone-guide .guide-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.clone-guide .guide-desc {
+  font-size: 0.76rem;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.clone-guide .btn {
+  background: var(--text);
+  color: white;
+  border: none;
+  border-radius: 0px;
+  padding: 0.45rem 1.2rem;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  transition: background 0.15s, transform 0.1s;
+}
+.clone-guide .btn:hover { background: oklch(0.22 0.012 95); }
+.clone-guide .btn:active { transform: scale(0.97); }
+
 .ctrl-row {
   display: flex;
   gap: 0.3rem;
@@ -231,61 +727,76 @@ body {
 }
 
 .btn {
-  padding: 0.35rem 0.7rem;
-  border: 1px solid #d0d0d0;
-  border-radius: 4px;
-  background: #fff;
-  color: #333;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.32rem 0.65rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
   font-family: inherit;
-  font-size: 0.75rem;
+  font-size: 0.73rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.1s;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
   white-space: nowrap;
 }
-.btn:hover { border-color: #666; }
-.btn:active { background: #f0f0f0; }
-.btn.active { background: #333; color: #fff; border-color: #333; }
-.btn.danger { color: #d32f2f; border-color: #e57373; }
-.btn.danger:hover { border-color: #d32f2f; }
+.btn:hover { background: oklch(0.95 0.006 95); border-color: var(--text-2); }
+.btn:active { transform: scale(0.97); }
+.btn.active { background: var(--text); color: var(--surface); border-color: var(--text); }
+.btn.danger { color: var(--red); border-color: oklch(0.75 0.10 27); }
+.btn.danger:hover { background: var(--red-soft); border-color: var(--red); }
+.btn.dark { background: var(--text); color: var(--surface); border-color: var(--text); }
+.btn.dark:hover { background: oklch(0.25 0.01 95); border-color: oklch(0.25 0.01 95); }
 
 .branch-chip {
-  padding: 0.2rem 0.5rem;
-  border-radius: 3px;
-  font-size: 0.68rem;
+  padding: 0.18rem 0.5rem;
+  border-radius: 99px;
+  font-size: 0.66rem;
   font-weight: 600;
   cursor: pointer;
   color: #fff;
-  border: 1.5px solid transparent;
+  border: 2px solid transparent;
+  transition: opacity 0.12s, transform 0.1s;
 }
-.branch-chip.current { border-color: #333; }
+.branch-chip:hover { opacity: 0.8; transform: scale(1.05); }
+.branch-chip:active { transform: scale(0.95); }
+.branch-chip.current { border-color: var(--text); }
 
 .dialog-overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.3);
+  background: oklch(0.2 0.01 95 / 0.35);
+  backdrop-filter: blur(2px);
   display: flex; align-items: center; justify-content: center;
   z-index: 100;
   opacity: 0; pointer-events: none;
-  transition: opacity 0.15s;
+  transition: opacity 0.18s;
 }
 .dialog-overlay.show { opacity: 1; pointer-events: all; }
 .dialog {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 1.2rem;
-  min-width: 300px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.3rem;
+  min-width: 320px;
   max-width: 480px;
+  box-shadow: var(--shadow-md);
+  transform: translateY(6px) scale(0.98);
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.dialog h3 { font-size: 0.85rem; margin-bottom: 0.7rem; }
-.dialog p { font-size: 0.75rem; color: #555; margin-bottom: 0.7rem; line-height: 1.4; }
+.dialog-overlay.show .dialog { transform: translateY(0) scale(1); }
+.dialog h3 { font-size: 0.88rem; font-weight: 650; margin-bottom: 0.7rem; }
+.dialog p { font-size: 0.75rem; color: var(--text-2); margin-bottom: 0.7rem; line-height: 1.5; }
 .dialog input {
   width: 100%; padding: 0.45rem 0.6rem;
-  border-radius: 4px; border: 1px solid #ccc;
-  background: #fafafa; color: #1a1a1a;
+  border-radius: var(--radius); border: 1px solid var(--border-strong);
+  background: var(--bg); color: var(--text);
   font-family: inherit; font-size: 0.8rem;
   margin-bottom: 0.7rem;
+  transition: border-color 0.12s, box-shadow 0.12s;
 }
-.dialog input:focus { outline: none; border-color: #333; }
+.dialog input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .dialog-btns { display: flex; gap: 0.4rem; justify-content: flex-end; flex-wrap: wrap; }
 
 .recipe-compare {
@@ -299,9 +810,10 @@ body {
 }
 .recipe-compare .side-label {
   font-size: 0.65rem;
-  color: #888;
+  color: var(--text-3);
   margin-bottom: 0.4rem;
   text-align: center;
+  font-weight: 600;
 }
 .recipe-compare .sandwich-preview {
   display: flex;
@@ -311,190 +823,635 @@ body {
 }
 .recipe-compare .preview-bread {
   padding: 3px 12px;
-  background: #fef3c7;
-  border: 1px solid #f59e0b;
+  background: var(--bread-bg);
+  border: 1px solid var(--bread-border);
   border-radius: 4px;
   font-size: 0.9rem;
 }
 .recipe-compare .preview-layer {
   padding: 3px 10px;
-  border: 1.5px solid #e0e0e0;
-  border-radius: 3px;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
   font-size: 0.82rem;
-  background: #fff;
+  background: var(--surface);
   min-width: 60px;
   text-align: center;
 }
 .recipe-compare .preview-layer.conflict {
-  border-color: #d32f2f;
-  background: #ffebee;
+  border-color: var(--red);
+  background: var(--red-soft);
 }
 .recipe-compare .preview-layer.added {
-  border-color: #16a34a;
-  background: #f0fdf4;
+  border-color: var(--green);
+  background: var(--green-soft);
 }
 .recipe-compare .preview-layer.removed {
-  border-color: #d32f2f;
-  background: #fef2f2;
+  border-color: var(--red);
+  background: var(--red-soft);
   text-decoration: line-through;
 }
 .recipe-compare .preview-layer.modified {
-  border-color: #d97706;
-  background: #fffbeb;
+  border-color: var(--amber);
+  background: var(--amber-soft);
 }
 
 .toast {
-  position: fixed; bottom: 4rem; left: 50%;
+  position: fixed; bottom: 3rem; left: 50%;
   transform: translateX(-50%) translateY(8px);
-  background: #333; color: #fff;
-  padding: 0.4rem 0.9rem; border-radius: 4px;
-  font-size: 0.75rem; opacity: 0;
-  transition: all 0.2s; z-index: 90;
+  background: var(--text); color: var(--surface);
+  padding: 0.45rem 1rem; border-radius: 8px;
+  font-size: 0.74rem; font-weight: 500; opacity: 0;
+  box-shadow: var(--shadow-md);
+  transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1); z-index: 90;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-.toast.error { background: #d32f2f; }
-.toast.warn { background: #e65100; }
+.toast.error { background: var(--red); }
+.toast.warn { background: var(--amber); }
 
 /* Hover tooltip card */
 .hover-card {
   position: absolute;
-  background: #fff;
-  border: 1px solid #d0d0d0;
-  border-radius: 8px;
-  padding: 0.7rem 0.8rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 0;
+  padding: 10px 12px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.10);
   z-index: 50;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.12s;
   min-width: 140px;
-  max-width: 220px;
+  max-width: 260px;
 }
 .hover-card.visible {
   opacity: 1;
 }
+.hover-card .hc-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.hover-card .hc-avatar {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
 .hover-card .hc-msg {
-  font-size: 0.72rem;
-  color: #333;
+  font-size: 0.7rem;
+  color: var(--text);
   font-weight: 600;
-  margin-bottom: 0.4rem;
   word-break: break-all;
+  line-height: 1.3;
+}
+.hover-card .hc-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.hover-card .hc-meta {
+  font-size: 0.6rem;
+  color: var(--text-3);
+  font-family: 'SF Mono', 'Menlo', monospace;
 }
 .hover-card .hc-sandwich {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   align-items: flex-start;
-  margin-bottom: 0.3rem;
+  margin-bottom: 4px;
 }
 .hover-card .hc-bread {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   padding: 2px 6px;
-  background: #fef3c7;
-  border-radius: 3px;
-  border: 1px solid #f59e0b;
+  background: var(--bread-bg);
+  border-radius: 0;
+  border: 1px solid var(--bread-border);
 }
 .hover-card .hc-layer {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   padding: 2px 6px;
-  border-radius: 3px;
-  border: 1px solid #e0e0e0;
-  background: #fff;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
 }
 .hover-card .hc-layer.diff-added {
-  background: #f0fdf4;
-  border-color: #22c55e;
+  color: var(--green);
 }
 .hover-card .hc-layer.diff-removed {
-  background: #fef2f2;
-  border-color: #ef4444;
+  color: var(--red);
   text-decoration: line-through;
 }
 .hover-card .hc-layer.diff-modified {
-  background: #fffbeb;
-  border-color: #f59e0b;
+  color: var(--amber);
 }
 .hover-card .hc-diff-label {
   font-size: 0.58rem;
-  color: #888;
-  margin-top: 0.2rem;
+  color: var(--text-3);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+.hover-card .hc-diff-label .legend-item {
+  font-weight: 600;
+}
+.hover-card .hc-diff-label .legend-item.legend-add {
+  color: var(--green);
+}
+.hover-card .hc-diff-label .legend-item.legend-del {
+  color: var(--red);
+}
+.hover-card .hc-diff-label .legend-item.legend-mod {
+  color: var(--amber);
+}
+
+/* Achievement system */
+.achievement-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.32rem 0.55rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  line-height: 1;
+}
+.achievement-btn:hover { background: var(--amber-soft); border-color: var(--amber); }
+.achievement-btn:active { transform: scale(0.96); }
+.achievement-progress {
+  font-size: 0.62rem;
+  color: var(--text-3);
+  font-weight: 600;
+  margin-left: -2px;
+}
+.achievement-panel {
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+  overflow: hidden;
+  width: 380px;
+}
+.achievement-panel h3 {
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.achievement-panel .ach-subtitle {
+  font-size: 0.72rem;
+  color: var(--text-3);
+  margin-bottom: 0.8rem;
+}
+.achievement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.15) transparent;
+}
+.achievement-list::-webkit-scrollbar { width: 4px; }
+.achievement-list::-webkit-scrollbar-track { background: transparent; }
+.achievement-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
+.achievement-list::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
+.achievement-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  transition: none;
+}
+.achievement-item.done {
+  background: transparent;
+}
+.achievement-item .ach-emoji {
+  font-size: 1.3rem;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.achievement-item .ach-info {
+  flex: 1;
+  min-width: 0;
+}
+.achievement-item .ach-name {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.achievement-item .ach-desc {
+  font-size: 0.66rem;
+  color: var(--text-3);
+  margin-top: 1px;
+}
+.achievement-item.done .ach-name { color: var(--text); }
+.achievement-item .ach-check {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.toast.achievement {
+  background: linear-gradient(135deg, oklch(0.45 0.12 80), oklch(0.50 0.15 55));
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.55rem 1.2rem;
+}
+
+/* ================================================================
+   MOBILE RESPONSIVE - 移动端适配
+   ================================================================ */
+
+/* Tablet breakpoint */
+@media (max-width: 768px) {
+  html, body {
+    height: auto;
+    overflow: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .header {
+    gap: 0.4rem;
+  }
+
+  .top-container {
+    padding: 14px 10px;
+    gap: 12px;
+  }
+
+  .main-layout {
+    flex-direction: column;
+    padding: 10px;
+    gap: 10px;
+    flex: none;
+    min-height: 0;
+  }
+
+  .left-panel {
+    flex: none;
+    min-height: 280px;
+    max-height: 45vh;
+    overflow: hidden;
+  }
+
+  .graph-container {
+    flex: none;
+    min-height: 300px;
+    max-height: 50vh;
+  }
+
+  .action-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding-bottom: 2px;
+  }
+  .action-bar::-webkit-scrollbar { display: none; }
+  .action-bar .btn {
+    flex: 1;
+    min-width: 0;
+    padding: 10px;
+  }
+
+  .dialog {
+    min-width: unset;
+    max-width: calc(100vw - 32px);
+    width: calc(100vw - 32px);
+    margin: 16px;
+  }
+
+  .achievement-panel {
+    width: calc(100vw - 64px);
+    max-width: 380px;
+  }
+}
+
+/* Phone breakpoint */
+@media (max-width: 480px) {
+  .top-container {
+    padding: 12px 8px;
+    gap: 10px;
+  }
+
+  .header h1 {
+    font-size: 0.95rem;
+  }
+  .header h1 span {
+    font-size: 22px !important;
+  }
+
+  .header-right {
+    gap: 0.3rem;
+  }
+  .capsule-btn {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.72rem;
+    height: 26px;
+  }
+
+  .main-layout {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .left-panel {
+    min-height: 240px;
+    max-height: 40vh;
+  }
+
+  .panel-header-row {
+    padding: 0 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .fail-toggle {
+    font-size: 11px;
+    padding: 3px 6px;
+    height: 26px;
+  }
+  .fail-toggle input[type="range"] {
+    width: 80px;
+    height: 12px;
+  }
+  .fail-label { font-size: 11px; }
+  .fail-rate-label { font-size: 11px; min-width: 28px; }
+
+  .sandwich-view {
+    max-width: 180px;
+  }
+
+  .add-layer-btn {
+    width: 36px;
+    height: 36px;
+    margin: 8px auto;
+  }
+  .add-layer-btn img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .chef-switcher {
+    height: 60px;
+  }
+  .chef-switcher .chef-avatar {
+    width: 60px;
+    height: 90px;
+  }
+  .chef-switcher .switch-label {
+    left: 55px;
+    bottom: 16px;
+    font-size: 0.62rem;
+    padding: 4px 10px 4px 12px;
+  }
+
+  .graph-container {
+    min-height: 260px;
+    max-height: 45vh;
+  }
+  .graph-panel-header {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.88rem;
+  }
+  .graph-content {
+    padding: 0.3rem;
+  }
+
+  .diff-summary {
+    font-size: 0.72rem;
+    padding: 0.6rem 0.7rem;
+    margin: 0.4rem 0.6rem;
+  }
+
+  .action-bar .btn {
+    padding: 8px;
+    gap: 0;
+  }
+  .action-bar .btn .btn-zh {
+    font-size: 0.7rem;
+  }
+  .action-bar .btn .btn-en {
+    font-size: 0.6rem;
+  }
+
+  .dialog {
+    width: calc(100vw - 24px);
+    max-width: calc(100vw - 24px);
+    padding: 1rem;
+    margin: 12px;
+  }
+  .dialog h3 { font-size: 0.82rem; }
+  .dialog p { font-size: 0.72rem; }
+  .dialog input { font-size: 0.76rem; padding: 0.4rem 0.5rem; }
+  .dialog-btns { flex-wrap: wrap; }
+  .dialog-btns .btn { flex: 1; justify-content: center; min-width: 0; }
+
+  .recipe-compare {
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .ingredient-selector {
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+    max-width: calc(100vw - 16px);
+  }
+
+  .achievement-panel {
+    width: calc(100vw - 48px);
+    max-height: 60vh;
+  }
+
+  .hover-card {
+    max-width: 180px;
+    min-width: 120px;
+  }
+
+  .toast {
+    left: 16px;
+    right: 16px;
+    transform: translateY(8px);
+    text-align: center;
+    max-width: none;
+  }
+  .toast.show {
+    transform: translateY(0);
+  }
+
+  .clone-guide {
+    padding: 1.2rem;
+    gap: 0.6rem;
+  }
+  .clone-guide .guide-title {
+    font-size: 0.95rem;
+  }
+  .clone-guide .guide-desc {
+    font-size: 0.72rem;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 360px) {
+  .header h1 {
+    font-size: 0.85rem;
+  }
+  .header h1 span {
+    font-size: 18px !important;
+  }
+  .capsule-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.68rem;
+  }
+  .action-bar .btn .btn-en {
+    display: none;
+  }
+  .fail-toggle input[type="range"] {
+    width: 60px;
+  }
+  .left-panel {
+    min-height: 200px;
+    max-height: 35vh;
+  }
+  .sandwich-view {
+    max-width: 140px;
+  }
+}
+
+/* Landscape phone orientation */
+@media (max-height: 500px) and (orientation: landscape) {
+  html, body {
+    height: auto;
+    overflow: auto;
+  }
+  .main-layout {
+    flex-direction: row;
+    min-height: 250px;
+  }
+  .left-panel {
+    max-height: none;
+    min-height: 0;
+    flex: 1;
+  }
+  .graph-container {
+    max-height: none;
+    min-height: 0;
+    flex: 1;
+  }
+  .top-container {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .sandwich-layer .layer-actions {
+    opacity: 1;
+  }
+  .layer-btn {
+    width: 32px;
+    height: 32px;
+  }
+  .layer-btn img {
+    width: 16px;
+    height: 16px;
+  }
+  .btn {
+    min-height: 36px;
+  }
+  .capsule-btn {
+    min-height: 32px;
+  }
+  .action-bar .btn {
+    min-height: 44px;
+  }
+  .ing-option {
+    padding: 10px 14px !important;
+    font-size: 0.78rem !important;
+  }
 }
 </style>
 </head>
 <body>
 
+<div class="top-container">
 <div class="header">
-  <h1>Git 可视化沙盒</h1>
-  <span class="sub">小绿 + 小红 · 协作模拟 · 汉堡配方 · 全局视角</span>
+  <h1><span style="font-family: var(--font-hand); font-weight: 900; font-size: 26px; margin-right: 2px; color: var(--text);">Git</span> 概念厨房</h1>
+  <div class="header-right">
+    <button class="capsule-btn no-border" onclick="showStoreDialog()"><img src="img/shop.webp" style="width:16px;height:18px;object-fit:contain;" alt="">门店</button>
+    <button class="capsule-btn" onclick="showAchievementPanel()"><img src="img/honor.webp" style="width:16px;height:18px;object-fit:contain;" alt="">成就 <span class="achievement-progress" id="achProgress"></span></button>
+  </div>
+</div>
+
+<div class="action-bar">
+  <button class="btn" onclick="doCommit()"><span class="btn-zh">存档</span><span class="btn-en">commit</span></button>
+  <button class="btn" onclick="doReset()"><span class="btn-zh">回退</span><span class="btn-en">reset</span></button>
+  <button class="btn sync-btn" id="syncBtn" onclick="doSync()"><span class="btn-zh" id="syncZh">同步</span><span class="btn-en" id="syncEn">sync</span></button>
+  <button class="btn" onclick="showBranchDialog(true)"><span class="btn-zh">开分支</span><span class="btn-en">branch</span></button>
+  <button class="btn" onclick="showMergeDialog()"><span class="btn-zh">合并</span><span class="btn-en">merge</span></button>
+  <button class="btn publish-btn" onclick="showPublishDialog()"><span class="btn-zh">发布</span><span class="btn-en">deploy</span></button>
+</div>
 </div>
 
 <div class="main-layout">
   <div class="left-panel" id="leftPanel">
-    <div class="panel-section">
+    <div class="panel-header-row">
+      <span class="panel-title">工作区</span>
+      <label class="fail-toggle" title="AI 翻车概率">
+        <span class="fail-label">AI 翻车率</span>
+        <input type="range" id="failRate" min="0" max="100" value="0" step="10" oninput="updateFailRate(this.value)">
+        <span class="fail-rate-label" id="failRateLabel">0%</span>
+      </label>
+    </div>
+    <div class="panel-section" id="branchSection" style="display:none!important;">
       <span class="panel-label">当前分支</span>
       <span class="panel-branch" id="panelBranch">main</span>
+      <div class="ctrl-row" id="branchChips" style="margin-top:0.3rem;"></div>
     </div>
-    <div class="panel-section">
-      <span class="panel-label">工作区汉堡</span>
+    <div class="panel-section" style="flex:1;min-height:0;overflow:hidden;padding-top:24px;display:flex;align-items:flex-start;justify-content:center;">
       <div class="sandwich-view" id="sandwichView"></div>
-      <div class="diff-summary" id="diffSummary"></div>
     </div>
-    <div class="panel-section">
-      <span class="panel-label">最近提交</span>
-      <span class="panel-message" id="panelMessage">-</span>
-    </div>
-    <div class="panel-section">
-      <span class="panel-label">同步状态</span>
-      <div class="panel-sync" id="panelSync"></div>
+
+    <div class="chef-switcher" id="chefSwitcher">
+      <img class="chef-avatar active" id="chefAvatar" src="img/chef1.webp" alt="小蓝">
+      <span class="switch-label" onclick="toggleChef()">切换视角</span>
     </div>
   </div>
 
   <div class="graph-container" id="graphContainer">
-    <svg id="graphSvg"></svg>
-    <div class="hover-card" id="hoverCard">
-      <div class="hc-msg" id="hcMsg"></div>
-      <div class="hc-sandwich" id="hcSandwich"></div>
-      <div class="hc-diff-label" id="hcDiffLabel"></div>
+    <div class="graph-panel-header">Git Graph</div>
+    <div class="graph-content" id="graphContent">
+      <svg id="graphSvg"></svg>
+      <div class="hover-card" id="hoverCard">
+        <div class="hc-header" id="hcHeader">
+          <img class="hc-avatar" id="hcAvatar" src="" alt="">
+          <div class="hc-title-block">
+            <div class="hc-msg" id="hcMsg"></div>
+            <div class="hc-meta" id="hcMeta"></div>
+          </div>
+        </div>
+        <div class="hc-sandwich" id="hcSandwich"></div>
+        <div class="hc-diff-label" id="hcDiffLabel"></div>
+      </div>
     </div>
-  </div>
-</div>
-
-<div class="controls">
-  <div class="ctrl-group">
-    <span class="ctrl-label">第一步：拉取项目</span>
-    <div class="ctrl-row">
-      <button class="btn active" onclick="doClone()">克隆 clone</button>
-    </div>
-  </div>
-  <div class="ctrl-group">
-    <span class="ctrl-label">我的操作</span>
-    <div class="ctrl-row">
-      <button class="btn" onclick="doCommit()">存档 commit</button>
-      <button class="btn" onclick="doReset()">回退 reset</button>
-      <button class="btn" onclick="doPush()">推送 push</button>
-    </div>
-  </div>
-  <div class="ctrl-group">
-    <span class="ctrl-label">分支</span>
-    <div class="ctrl-row">
-      <button class="btn" onclick="showBranchDialog(true)">开分支 branch</button>
-      <button class="btn" onclick="showMergeDialog()">合并 merge</button>
-    </div>
-    <div class="ctrl-row" id="branchChips"></div>
-  </div>
-  <div class="ctrl-group">
-    <span class="ctrl-label">协作</span>
-    <div class="ctrl-row">
-      <button class="btn" onclick="doPull()">拉取 pull</button>
-      <button class="btn" onclick="doTeammateCommit()">小红提交</button>
-    </div>
-  </div>
-  <div class="ctrl-group">
-    <span class="ctrl-label" style="cursor:pointer;text-decoration:underline;" onclick="toggleAdvanced()">进阶 ▸</span>
-    <div class="ctrl-row" id="advancedBtns" style="display:none;">
-      <button class="btn" onclick="doFetch()">获取 fetch</button>
-      <button class="btn danger" onclick="showDeleteBranchDialog()">删分支 branch -d</button>
-    </div>
+    <div class="diff-summary" id="diffSummary"></div>
   </div>
 </div>
 
@@ -509,17 +1466,32 @@ body {
 // HAMBURGER RECIPE SYSTEM - Layer-based model
 // ================================================================
 const INGREDIENTS = [
-  { emoji: '🍅', name: '西红柿' },
-  { emoji: '🥬', name: '生菜' },
-  { emoji: '🥩', name: '牛肉' },
-  { emoji: '🧀', name: '芝士' }
+  { id: 'cheese', name: '芝士', img: 'img/cheese.webp' },
+  { id: 'patty', name: '牛肉', img: 'img/patty.webp' },
+  { id: 'lettuce', name: '生菜', img: 'img/lettuce.webp' },
+  { id: 'tomato', name: '西红柿', img: 'img/tomato.webp' }
 ];
 
-const INITIAL_RECIPE = ['🍅', '🧀', '🥬'];
+const INITIAL_RECIPE = ['tomato', 'cheese', 'lettuce'];
 
-function getIngredientName(emoji) {
-  const found = INGREDIENTS.find(i => i.emoji === emoji);
+// AI 帮厨可能产出的坏食材（AI 幻觉）
+const BAD_INGREDIENT = 'bad';
+const BAD_IMG = 'img/bad.webp';
+
+function getIngredientImg(id) {
+  if (id === BAD_INGREDIENT) return BAD_IMG;
+  const found = INGREDIENTS.find(i => i.id === id);
+  return found ? found.img : 'img/patty.webp';
+}
+
+function getIngredientName(id) {
+  if (id === BAD_INGREDIENT) return 'AI 幻觉物';
+  const found = INGREDIENTS.find(i => i.id === id);
   return found ? found.name : '未知';
+}
+
+function isBadRecipe(recipe) {
+  return recipe && recipe.includes(BAD_INGREDIENT);
 }
 
 // Diff two recipe arrays (layer-by-layer comparison)
@@ -532,7 +1504,9 @@ function diffRecipes(oldRecipe, newRecipe) {
     } else if (i >= newRecipe.length) {
       result.push({ type: 'removed', value: oldRecipe[i], index: i });
     } else if (oldRecipe[i] !== newRecipe[i]) {
-      result.push({ type: 'modified', oldValue: oldRecipe[i], value: newRecipe[i], index: i });
+      // 跟真实 git diff 一致：modification = 删除旧行 + 新增新行
+      result.push({ type: 'removed', value: oldRecipe[i], index: i });
+      result.push({ type: 'added', value: newRecipe[i], index: i });
     } else {
       result.push({ type: 'same', value: newRecipe[i], index: i });
     }
@@ -543,13 +1517,65 @@ function diffRecipes(oldRecipe, newRecipe) {
 // Compute diff summary counts
 function diffSummary(oldRecipe, newRecipe) {
   const diff = diffRecipes(oldRecipe, newRecipe);
-  let added = 0, removed = 0, modified = 0;
+  let added = 0, removed = 0;
   for (const d of diff) {
     if (d.type === 'added') added++;
     else if (d.type === 'removed') removed++;
-    else if (d.type === 'modified') modified++;
   }
-  return { added, removed, modified };
+  return { added, removed, modified: 0 };
+}
+
+// Generate realistic conventional commit message from recipe diff
+function generateRealisticMsg(oldRecipe, newRecipe) {
+  const diff = diffRecipes(oldRecipe, newRecipe);
+  const added = diff.filter(d => d.type === 'added');
+  const removed = diff.filter(d => d.type === 'removed');
+
+  // 检测同一 index 同时有 removed 和 added 的情况（即替换）
+  const replacedIndices = new Set();
+  for (const r of removed) {
+    if (added.some(a => a.index === r.index)) replacedIndices.add(r.index);
+  }
+  const pureAdded = added.filter(d => !replacedIndices.has(d.index));
+  const pureRemoved = removed.filter(d => !replacedIndices.has(d.index));
+  const replacePairs = [...replacedIndices].map(idx => ({
+    index: idx,
+    oldValue: removed.find(d => d.index === idx).value,
+    newValue: added.find(d => d.index === idx).value
+  }));
+
+  let type, desc;
+  if (pureAdded.length > 0 && pureRemoved.length === 0 && replacePairs.length === 0) {
+    type = 'feat';
+    if (pureAdded.length === 1) {
+      desc = `在第${pureAdded[0].index + 1}层添加${getIngredientName(pureAdded[0].value)}`;
+    } else {
+      desc = `添加${pureAdded.map(d => getIngredientName(d.value)).join('、')}共${pureAdded.length}层新食材`;
+    }
+  } else if (pureRemoved.length > 0 && pureAdded.length === 0 && replacePairs.length === 0) {
+    type = 'refactor';
+    if (pureRemoved.length === 1) {
+      desc = `移除第${pureRemoved[0].index + 1}层${getIngredientName(pureRemoved[0].value)}，精简配方结构`;
+    } else {
+      desc = `移除${pureRemoved.map(d => getIngredientName(d.value)).join('、')}，精简${pureRemoved.length}层冗余食材`;
+    }
+  } else if (replacePairs.length > 0 && pureAdded.length === 0 && pureRemoved.length === 0) {
+    type = replacePairs.length > 1 ? 'refactor' : 'fix';
+    if (replacePairs.length === 1) {
+      desc = `第${replacePairs[0].index + 1}层${getIngredientName(replacePairs[0].oldValue)}替换为${getIngredientName(replacePairs[0].newValue)}，优化口感层次`;
+    } else {
+      desc = `调整${replacePairs.map(d => `第${d.index+1}层`).join('、')}食材搭配，重构口味平衡`;
+    }
+  } else {
+    type = 'feat';
+    const parts = [];
+    if (replacePairs.length) parts.push(`替换${replacePairs.map(d => getIngredientName(d.oldValue) + '→' + getIngredientName(d.newValue)).join('、')}`);
+    if (pureAdded.length) parts.push(`新增${pureAdded.map(d => getIngredientName(d.value)).join('、')}`);
+    if (pureRemoved.length) parts.push(`移除${pureRemoved.map(d => getIngredientName(d.value)).join('、')}`);
+    desc = parts.join('，');
+  }
+
+  return `${type}(配方): ${desc}`;
 }
 
 // Three-way merge for variable-length recipes
@@ -600,7 +1626,7 @@ function randomRecipeOperation(recipe) {
   ops.push('modify', 'add');
   const op = ops[Math.floor(Math.random() * ops.length)];
   const newRecipe = [...recipe];
-  const randomIngredient = () => INGREDIENTS[Math.floor(Math.random() * INGREDIENTS.length)].emoji;
+  const randomIngredient = () => INGREDIENTS[Math.floor(Math.random() * INGREDIENTS.length)].id;
 
   if (op === 'modify' && newRecipe.length > 0) {
     const idx = Math.floor(Math.random() * newRecipe.length);
@@ -657,7 +1683,7 @@ class Repo {
 
   init(initialRecipe) {
     const id = this._id();
-    this.commits.set(id, { id, msg: '初始提交', parents: [], recipe: [...initialRecipe], author: '老师' });
+    this.commits.set(id, { id, msg: '初始提交', parents: [], recipe: [...initialRecipe], author: null });
     this.branches.set('main', id);
     this.branchColors.set('main', '#2563eb');
   }
@@ -668,17 +1694,22 @@ class Repo {
 
   getHeadRecipe() {
     const hc = this.commits.get(this.headCommit());
-    return hc ? [...hc.recipe] : [...INITIAL_RECIPE];
+    // If HEAD is the initial commit (hidden from user), treat as empty
+    if (hc && hc.parents.length === 0) return [];
+    return hc ? [...hc.recipe] : [];
   }
 
   commit(prefix, userMsg, recipe, author) {
     const parent = this.headCommit();
     const id = this._id();
-    const label = prefix || '绿';
     this.commitCounter++;
-    const defaultMsg = label + this.commitCounter;
-    const msg = userMsg ? `${defaultMsg}: ${userMsg}` : defaultMsg;
-    this.commits.set(id, { id, msg, parents: [parent], recipe: [...recipe], author: author || '小绿' });
+    let msg = userMsg;
+    if (!msg) {
+      const parentCommit = this.commits.get(parent);
+      const parentRecipe = parentCommit ? (parentCommit.parents.length === 0 ? [] : parentCommit.recipe) : [];
+      msg = generateRealisticMsg(parentRecipe, recipe);
+    }
+    this.commits.set(id, { id, msg, parents: [parent], recipe: [...recipe], author: author || '小蓝' });
     if (this.HEAD.type === 'branch') this.branches.set(this.HEAD.ref, id);
     else this.HEAD.ref = id;
     return id;
@@ -738,7 +1769,7 @@ class Repo {
     }
 
     const id = this._id();
-    this.commits.set(id, { id, msg: '合并', parents: [curId, targetId], recipe: mergedRecipe, author: '小绿' });
+    this.commits.set(id, { id, msg: '合并', parents: [curId, targetId], recipe: mergedRecipe, author: '小蓝' });
     this.branches.set(cur, id);
     return { id, type: 'merge' };
   }
@@ -748,7 +1779,7 @@ class Repo {
     const curId = this.branches.get(cur);
     const targetId = this.branches.get(target);
     const id = this._id();
-    this.commits.set(id, { id, msg: '合并', parents: [curId, targetId], recipe: [...recipe], author: '小绿' });
+    this.commits.set(id, { id, msg: '合并', parents: [curId, targetId], recipe: [...recipe], author: '小蓝' });
     this.branches.set(cur, id);
     return { id, type: 'merge' };
   }
@@ -768,7 +1799,7 @@ class Repo {
     const parentCommit = targetCommit.parents.length ? this.commits.get(targetCommit.parents[0]) : null;
     const revertRecipe = parentCommit ? [...parentCommit.recipe] : [...INITIAL_RECIPE];
     const id = this._id();
-    this.commits.set(id, { id, msg: `撤销「${targetCommit.msg}」`, parents: [headId], recipe: revertRecipe, author: '小绿' });
+    this.commits.set(id, { id, msg: `撤销「${targetCommit.msg}」`, parents: [headId], recipe: revertRecipe, author: '小蓝' });
     if (this.HEAD.type === 'branch') this.branches.set(this.HEAD.ref, id);
     return id;
   }
@@ -862,11 +1893,13 @@ class GitSystem {
     const rtip = this.remote.branches.get(branch);
     const news = repo.getNewCommits(branch, this.remote);
     if (!news.length && tip === rtip) throw new Error('已是最新');
-    if (rtip && !repo._isAnc(rtip, tip)) throw new Error('远端有新提交，请先 Pull');
+    if (rtip && !repo._isAnc(rtip, tip)) throw new Error('远端有新提交，请先同步拉取');
     for (const c of news) this.remote.commits.set(c.id, { ...c, recipe: c.recipe ? [...c.recipe] : undefined });
     if (!this.remote.branches.has(branch)) this.remote.branchColors.set(branch, repo.branchColors.get(branch));
     this.remote.branches.set(branch, tip);
     this.remote.counter = Math.max(this.remote.counter, repo.counter);
+    // Sync all repo counters to prevent ID collisions
+    this.teammate.counter = Math.max(this.teammate.counter, this.remote.counter);
     repo.remoteRefs.set('origin/' + branch, tip);
   }
 
@@ -906,7 +1939,7 @@ class GitSystem {
 
     if (conflicts.length === 0) {
       const id = repo._id();
-      repo.commits.set(id, { id, msg: '合并', parents: [lid, rid], recipe: mergedRecipe, author: '小绿' });
+      repo.commits.set(id, { id, msg: '合并', parents: [lid, rid], recipe: mergedRecipe, author: '小蓝' });
       repo.branches.set(branch, id);
       return { type: 'auto-merge', id };
     }
@@ -941,7 +1974,7 @@ class GitSystem {
       }
     }
 
-    repo.commits.set(id, { id, msg, parents: [lid, rid], recipe, author: '小绿' });
+    repo.commits.set(id, { id, msg, parents: [lid, rid], recipe, author: '小蓝' });
     repo.branches.set(branch, id);
     return id;
   }
@@ -954,9 +1987,11 @@ class GitSystem {
     const parentRecipe = parentCommit ? parentCommit.recipe : [...INITIAL_RECIPE];
     const newRecipe = randomRecipeOperation(parentRecipe);
     other.commitCounter++;
+    // Sync counter BEFORE generating ID to prevent collision with local uncommitted work
+    other.counter = Math.max(other.counter, this.local.counter, this.remote.counter);
     const id = 'c' + (other.counter++);
-    const label = '红';
-    const msg = label + other.commitCounter;
+    const realParentRecipe = parentCommit && parentCommit.parents.length === 0 ? [] : parentRecipe;
+    const msg = generateRealisticMsg(realParentRecipe, newRecipe);
     other.commits.set(id, { id, msg, parents: [parent], recipe: newRecipe, author: '小红' });
     other.branches.set(branch, id);
     if (!this.remote.branches.has(branch)) {
@@ -984,6 +2019,61 @@ class GitSystem {
     if (!branch) return 0;
     return this.remote.getNewCommits(branch, this.local).length;
   }
+
+  getTeammateAhead() {
+    const branch = this.teammate.currentBranch() || 'main';
+    if (!branch) return 0;
+    return this.teammate.getNewCommits(branch, this.remote).length;
+  }
+
+  getTeammateBehind() {
+    const branch = this.teammate.currentBranch() || 'main';
+    if (!branch) return 0;
+    return this.remote.getNewCommits(branch, this.teammate).length;
+  }
+
+  fetchForTeammate() {
+    const repo = this.teammate;
+    let n = 0;
+    for (const [id, c] of this.remote.commits) {
+      if (!repo.commits.has(id)) { repo.commits.set(id, { ...c, recipe: c.recipe ? [...c.recipe] : undefined }); n++; }
+    }
+    for (const [b, bid] of this.remote.branches) {
+      repo.remoteRefs.set('origin/' + b, bid);
+      if (!repo.branchColors.has(b)) repo.branchColors.set(b, this.remote.branchColors.get(b));
+    }
+    repo.counter = Math.max(repo.counter, this.remote.counter);
+    return n;
+  }
+
+  pullForTeammate() {
+    const repo = this.teammate;
+    this.fetchForTeammate();
+    const branch = repo.currentBranch() || 'main';
+    const rid = repo.remoteRefs.get('origin/' + branch);
+    if (!rid) throw new Error('没有对应远端分支');
+    const lid = repo.branches.get(branch);
+    if (lid === rid || repo._isAnc(rid, lid)) return { type: 'up-to-date' };
+    if (repo._isAnc(lid, rid)) { repo.branches.set(branch, rid); return { type: 'fast-forward', id: rid }; }
+
+    const baseId = findMergeBase(repo, lid, rid);
+    const baseCommit = repo.commits.get(baseId);
+    const localCommit = repo.commits.get(lid);
+    const remoteCommit = repo.commits.get(rid);
+    const baseRecipe = baseCommit ? baseCommit.recipe : [...INITIAL_RECIPE];
+    const localRecipe = localCommit ? localCommit.recipe : [...INITIAL_RECIPE];
+    const remoteRecipe = remoteCommit ? remoteCommit.recipe : [...INITIAL_RECIPE];
+    const { recipe: mergedRecipe, conflicts } = mergeRecipes(baseRecipe, localRecipe, remoteRecipe);
+
+    if (conflicts.length === 0) {
+      const id = repo._id();
+      repo.commits.set(id, { id, msg: '合并', parents: [lid, rid], recipe: mergedRecipe, author: '小红' });
+      repo.branches.set(branch, id);
+      return { type: 'auto-merge', id };
+    }
+
+    return { type: 'conflict', localId: lid, remoteId: rid, baseRecipe, localRecipe, remoteRecipe, mergedRecipe, conflicts };
+  }
 }
 
 // ================================================================
@@ -992,17 +2082,25 @@ class GitSystem {
 class UnifiedRenderer {
   constructor(svg) {
     this.svg = svg;
-    this.R = 14;
+    this.R = 6;
     this.xGap = 70;
-    this.yGap = 72;
-    this.pad = { t: 40, l: 40, r: 220, b: 40 };
+    this.yGap = 36;
+    this.pad = { t: 30, l: 30, r: 360, b: 30 };
     this.nodeData = [];
   }
 
-  _commitColor(msg) {
-    if (msg.startsWith('绿')) return '#16a34a';
-    if (msg.startsWith('红')) return '#dc2626';
-    return '#2563eb';
+  _commitColor(author) {
+    if (author === '小蓝') return '#2563eb';
+    if (author === '小红') return '#dc2626';
+    return '#64748b';
+  }
+
+  _textWidth(str, fontSize) {
+    let w = 0;
+    for (const ch of str) {
+      w += ch.charCodeAt(0) > 127 ? fontSize : fontSize * 0.6;
+    }
+    return w;
   }
 
   render(localRepo, remoteRepo) {
@@ -1022,7 +2120,9 @@ class UnifiedRenderer {
     const { nodes, maxLane, maxLevel } = this._layout(allCommits, localRepo, remoteRepo, reachable);
 
     const w = this.pad.l + Math.max(maxLane, 0) * this.xGap + this.pad.r;
-    const h = this.pad.t + Math.max(maxLevel, 0) * this.yGap + this.pad.b;
+    const hasInitial = [...allCommits.values()].some(c => c.parents.length === 0);
+    const levelOffset = hasInitial ? 1 : 0;
+    const h = this.pad.t + Math.max(maxLevel - levelOffset, 0) * this.yGap + this.pad.b;
     this.svg.setAttribute('width', w);
     this.svg.setAttribute('height', h);
     this.svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
@@ -1035,19 +2135,55 @@ class UnifiedRenderer {
       n.localOnly = inLocal && !inRemote;
       n.remoteOnly = !inLocal && inRemote;
       n.isUnreachable = !reachable.has(n.id);
-      n.color = this._commitColor(n.msg);
+      n.color = this._commitColor(n.author);
+      n.isInitial = n.parents.length === 0;
     }
 
-    for (const n of nodes) {
+    // Filter out the initial commit (no parents) - it's just noise for learners
+    const visibleNodes = nodes.filter(n => !n.isInitial);
+    // Shift all visible nodes up by one level (since we removed the root)
+    if (visibleNodes.length && nodes.some(n => n.isInitial)) {
+      for (const n of visibleNodes) {
+        n.y -= this.yGap;
+      }
+    }
+
+    // Empty state: cloned but no user commits yet
+    if (!visibleNodes.length) {
+      this.svg.setAttribute('width', 460);
+      this.svg.setAttribute('height', 120);
+      this.svg.setAttribute('viewBox', '0 0 460 120');
+      this.svg.innerHTML = '';
+      // Use HTML overlay for consistent styling with clone-guide
+      const container = this.svg.parentElement;
+      let emptyGuide = container.querySelector('.empty-guide');
+      if (!emptyGuide) {
+        emptyGuide = document.createElement('div');
+        emptyGuide.className = 'clone-guide empty-guide';
+        emptyGuide.innerHTML = `<div class="guide-title">厨房已就位，还没有任何存档</div><div class="guide-desc">在左侧给汉堡加一层，然后点「存档 commit」留下第一个版本</div>`;
+        container.appendChild(emptyGuide);
+      }
+      emptyGuide.style.display = 'flex';
+      this.nodeData = [];
+      this.allCommits = allCommits;
+      return;
+    } else {
+      // Hide empty guide if it exists
+      const container = this.svg.parentElement;
+      const emptyGuide = container.querySelector('.empty-guide');
+      if (emptyGuide) emptyGuide.style.display = 'none';
+    }
+
+    for (const n of visibleNodes) {
       for (const pid of n.parents) {
-        const pn = nodes.find(x => x.id === pid);
+        const pn = visibleNodes.find(x => x.id === pid);
         if (pn) this._edge(pn, n);
       }
     }
-    for (const n of nodes) this._node(n, localRepo, allCommits);
-    for (const n of nodes) this._labels(n, localRepo, remoteRepo);
+    for (const n of visibleNodes) this._node(n, localRepo, allCommits);
+    for (const n of visibleNodes) this._labels(n, localRepo, remoteRepo);
 
-    this.nodeData = nodes;
+    this.nodeData = visibleNodes;
     this.allCommits = allCommits;
   }
 
@@ -1101,14 +2237,33 @@ class UnifiedRenderer {
 
     const commitLane = new Map(), branchLane = new Map();
     let li = 0;
+    // Assign main lane first (lane 0)
     for (const b of branchOrder) {
       if (!branchLane.has(b)) branchLane.set(b, li++);
+    }
+    // Walk from each branch tip back, assign lanes
+    // Main gets priority to stay on lane 0
+    for (const b of branchOrder) {
       let cId = localRepo.branches.get(b) || remoteRepo.branches.get(b);
       const lane = branchLane.get(b);
       while (cId && !commitLane.has(cId)) {
         commitLane.set(cId, lane);
         const cm = allCommits.get(cId);
         cId = cm && cm.parents.length ? cm.parents[0] : null;
+      }
+    }
+    // Flatten linear chains: if a parent has only one child, both should be on same lane
+    // Use the parent's lane as authority (since main is assigned first)
+    const sorted = commits.slice().sort((a, b) => (levels.get(a.id) || 0) - (levels.get(b.id) || 0));
+    for (const c of sorted) {
+      const kids = children.get(c.id) || [];
+      if (kids.length === 1) {
+        const kidId = kids[0];
+        const kidCommit = allCommits.get(kidId);
+        // Only flatten if this is the kid's first parent (not a merge second-parent)
+        if (kidCommit && kidCommit.parents[0] === c.id) {
+          commitLane.set(kidId, commitLane.get(c.id));
+        }
       }
     }
 
@@ -1134,12 +2289,13 @@ class UnifiedRenderer {
 
       return {
         id: c.id, msg: c.msg, parents: c.parents, recipe: c.recipe, author: c.author,
+        hasBad: c.recipe && c.recipe.includes(BAD_INGREDIENT),
         x: this.pad.l + lane * this.xGap,
         y: this.pad.t + level * this.yGap,
         brLabels, remoteLabels,
         isHead: c.id === headId,
         isMerge: c.parents.length > 1,
-        color: '#888'
+        color: 'oklch(0.55 0.01 95)'
       };
     });
     return { nodes, maxLane, maxLevel };
@@ -1152,10 +2308,10 @@ class UnifiedRenderer {
     else { const m = (p.y + c.y) / 2; d = `M${p.x} ${p.y}C${p.x} ${m},${c.x} ${m},${c.x} ${c.y}`; }
     path.setAttribute('d', d);
     path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', c.isUnreachable ? '#ccc' : c.color);
+    path.setAttribute('stroke', c.isUnreachable ? 'oklch(0.85 0.005 95)' : c.color);
     path.setAttribute('stroke-width', '2');
-    path.setAttribute('opacity', c.isUnreachable ? '0.3' : '0.45');
-    if (c.isUnreachable || c.localOnly || c.remoteOnly) path.setAttribute('stroke-dasharray', '4 3');
+    path.setAttribute('opacity', c.isUnreachable ? '0.2' : '0.45');
+    if (c.isUnreachable) path.setAttribute('stroke-dasharray', '4 3');
     this.svg.appendChild(path);
   }
 
@@ -1164,14 +2320,15 @@ class UnifiedRenderer {
 
     if (n.isUnreachable) {
       const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      circle.setAttribute('cx', n.x); circle.setAttribute('cy', n.y); circle.setAttribute('r', this.R);
-      circle.setAttribute('fill', '#e8e8e8'); circle.setAttribute('stroke', '#ccc'); circle.setAttribute('stroke-width', '1');
-      circle.setAttribute('stroke-dasharray', '3 2');
+      circle.setAttribute('cx', n.x); circle.setAttribute('cy', n.y); circle.setAttribute('r', this.R - 1);
+      circle.setAttribute('fill', 'oklch(0.95 0.005 95)'); circle.setAttribute('stroke', 'oklch(0.82 0.005 95)'); circle.setAttribute('stroke-width', '1.5');
+      circle.setAttribute('stroke-dasharray', '2 2');
       g.appendChild(circle);
       const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      t.setAttribute('x', n.x); t.setAttribute('y', n.y); t.setAttribute('text-anchor', 'middle');
-      t.setAttribute('dy', '0.35em'); t.setAttribute('fill', '#aaa');
-      t.setAttribute('font-size', '9'); t.setAttribute('font-weight', '600');
+      t.setAttribute('x', n.x + this.R + 8); t.setAttribute('y', n.y);
+      t.setAttribute('text-anchor', 'start');
+      t.setAttribute('dy', '0.35em'); t.setAttribute('fill', 'oklch(0.70 0.008 95)');
+      t.setAttribute('font-size', '11'); t.setAttribute('font-weight', '400');
       t.setAttribute('font-family', '-apple-system, sans-serif');
       t.textContent = n.msg;
       g.appendChild(t);
@@ -1179,62 +2336,56 @@ class UnifiedRenderer {
       return;
     }
 
+    // HEAD outer ring - larger and more visible
     if (n.isHead) {
       const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      ring.setAttribute('cx', n.x); ring.setAttribute('cy', n.y); ring.setAttribute('r', this.R + 3);
-      ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', n.color); ring.setAttribute('stroke-width', '1.5');
-      ring.setAttribute('stroke-dasharray', '3 2');
+      ring.setAttribute('cx', n.x); ring.setAttribute('cy', n.y); ring.setAttribute('r', this.R + 4);
+      ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', n.color); ring.setAttribute('stroke-width', '2');
+      ring.setAttribute('opacity', '0.7');
       g.appendChild(ring);
     }
 
+    // Node circle
     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     circle.setAttribute('cx', n.x); circle.setAttribute('cy', n.y); circle.setAttribute('r', this.R);
 
     if (n.synced) {
+      // Synced: solid fill
       circle.setAttribute('fill', n.color);
+      circle.setAttribute('stroke', n.color);
+      circle.setAttribute('stroke-width', '2');
     } else {
+      // Unsynced (local-only or remote-only): hollow with solid thick border
       circle.setAttribute('fill', '#fff');
       circle.setAttribute('stroke', n.color);
       circle.setAttribute('stroke-width', '2.5');
-      circle.setAttribute('stroke-dasharray', '4 2');
     }
     g.appendChild(circle);
 
+    // Merge indicator - concentric ring inside
     if (n.isMerge) {
       const mc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      mc.setAttribute('cx', n.x); mc.setAttribute('cy', n.y); mc.setAttribute('r', '4');
-      mc.setAttribute('fill', 'none');
-      mc.setAttribute('stroke', n.synced ? '#fff' : n.color);
-      mc.setAttribute('stroke-width', '1.5');
+      mc.setAttribute('cx', n.x); mc.setAttribute('cy', n.y); mc.setAttribute('r', this.R - 3);
+      mc.setAttribute('fill', n.synced ? '#fff' : n.color);
+      mc.setAttribute('stroke', 'none');
       g.appendChild(mc);
     }
 
+    // Commit message text
     const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    t.setAttribute('x', n.x); t.setAttribute('y', n.y); t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('x', n.x + this.R + 8); t.setAttribute('y', n.y);
+    t.setAttribute('text-anchor', 'start');
     t.setAttribute('dy', '0.35em');
-    t.setAttribute('fill', n.synced ? '#fff' : n.color);
-    t.setAttribute('font-size', '8'); t.setAttribute('font-weight', '600');
+    t.setAttribute('fill', 'oklch(0.27 0.012 95)');
+    t.setAttribute('font-size', '11.5'); t.setAttribute('font-weight', '500');
     t.setAttribute('font-family', '-apple-system, sans-serif');
-    const displayMsg = n.msg.length > 5 ? n.msg.slice(0, 5) : n.msg;
-    t.textContent = displayMsg;
+    t.textContent = n.msg;
     g.appendChild(t);
-
-    // Author label below node
-    if (n.author) {
-      const authorText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      authorText.setAttribute('x', n.x); authorText.setAttribute('y', n.y + this.R + 11);
-      authorText.setAttribute('text-anchor', 'middle');
-      authorText.setAttribute('fill', n.author === '小红' ? '#dc2626' : '#16a34a');
-      authorText.setAttribute('font-size', '7'); authorText.setAttribute('font-weight', '500');
-      authorText.setAttribute('font-family', '-apple-system, sans-serif');
-      authorText.textContent = n.author;
-      g.appendChild(authorText);
-    }
 
     // Hit area for hover
     const hitArea = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     hitArea.setAttribute('cx', n.x); hitArea.setAttribute('cy', n.y);
-    hitArea.setAttribute('r', this.R + 4);
+    hitArea.setAttribute('r', this.R + 10);
     hitArea.setAttribute('fill', 'transparent');
     hitArea.setAttribute('stroke', 'none');
     hitArea.style.pointerEvents = 'all';
@@ -1247,34 +2398,49 @@ class UnifiedRenderer {
 
   _labels(n, localRepo, remoteRepo) {
     if (n.isUnreachable) return;
-    let ox = this.R + 6;
+    // Calculate offset after commit text
+    const msgWidth = this._textWidth(n.msg, 11) + 6;
+    let ox = this.R + 8 + msgWidth + 6;
     const labels = [];
 
     for (const b of n.brLabels) {
-      labels.push({ t: b, c: localRepo.branchColors.get(b) || '#888', cur: localRepo.currentBranch() === b, remote: false });
+      labels.push({ t: b, c: localRepo.branchColors.get(b) || 'oklch(0.55 0.01 95)', cur: localRepo.currentBranch() === b, remote: false });
     }
 
     const seenRemote = new Set();
     for (const r of n.remoteLabels) {
       if (!seenRemote.has(r)) {
         seenRemote.add(r);
-        labels.push({ t: r, c: '#888', cur: false, remote: true });
+        labels.push({ t: r, c: 'oklch(0.55 0.01 95)', cur: false, remote: true });
       }
     }
 
     if (n.isHead) labels.push({ t: 'HEAD', c: '#dc2626', cur: true, remote: false });
 
+    // 发布状态标签
+    if (publishState.production === n.id) {
+      labels.push({ t: '线上', c: '#16a34a', cur: true, remote: false });
+    }
+    if (publishState.canary === n.id) {
+      labels.push({ t: '试吃', c: '#d97706', cur: true, remote: false });
+    }
+
+    // AI 幻觉食材警告标签
+    if (n.hasBad) {
+      labels.push({ t: 'AI 幻觉', c: '#b91c1c', cur: true, remote: false });
+    }
+
     for (const lb of labels) {
-      const tw = lb.t.length * 6 + 10;
+      const tw = this._textWidth(lb.t, 8) + 12;
       const ax = n.x + ox;
       const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      rect.setAttribute('x', ax); rect.setAttribute('y', n.y - 8);
-      rect.setAttribute('width', tw); rect.setAttribute('height', 16);
+      rect.setAttribute('x', ax); rect.setAttribute('y', n.y - 7);
+      rect.setAttribute('width', tw); rect.setAttribute('height', 14);
       rect.setAttribute('rx', '3');
 
       if (lb.remote) {
-        rect.setAttribute('fill', '#f3f4f6');
-        rect.setAttribute('stroke', '#9ca3af');
+        rect.setAttribute('fill', 'oklch(0.96 0.004 95)');
+        rect.setAttribute('stroke', 'oklch(0.70 0.008 95)');
         rect.setAttribute('stroke-width', '1');
         rect.setAttribute('stroke-dasharray', '3 2');
       } else {
@@ -1286,7 +2452,7 @@ class UnifiedRenderer {
       const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
       t.setAttribute('x', ax + tw / 2); t.setAttribute('y', n.y);
       t.setAttribute('text-anchor', 'middle'); t.setAttribute('dy', '0.32em');
-      t.setAttribute('fill', lb.remote ? '#4b5563' : '#fff');
+      t.setAttribute('fill', lb.remote ? 'oklch(0.42 0.01 95)' : '#fff');
       t.setAttribute('font-size', '8'); t.setAttribute('font-weight', '600');
       t.setAttribute('font-family', '-apple-system, sans-serif');
       t.textContent = lb.t;
@@ -1303,48 +2469,108 @@ const sys = new GitSystem();
 const renderer = new UnifiedRenderer(document.getElementById('graphSvg'));
 let pendingConflictInfo = null;
 
+// 发布状态：模拟线上环境
+const publishState = {
+  production: null,   // 全量线上版本对应的 commitId
+  canary: null,       // 试吃（小流量）版本对应的 commitId
+};
+
 // Remote repo already exists (someone created it on GitHub with a README)
 sys.remote.init(INITIAL_RECIPE);
 sys._copyRepo(sys.remote, sys.teammate);
 sys.teammate.remoteRefs.set('origin/main', sys.remote.branches.get('main'));
 
+// Auto-clone for green chef so both perspectives start at the same state
+sys._copyRepo(sys.remote, sys.local);
+sys.local.remoteRefs.set('origin/main', sys.remote.branches.get('main'));
+sys.initialized = true;
+
 // Working recipe state (editable in left panel)
-let workingRecipe = [...INITIAL_RECIPE];
+let workingRecipe = [];
+let currentChef = 'green'; // 'green' or 'red'
+let redWorkingRecipe = [];
 
 function getCommittedRecipe() {
+  if (currentChef === 'red') {
+    const branch = sys.teammate.currentBranch() || 'main';
+    const cid = sys.teammate.branches.get(branch);
+    const c = sys.teammate.commits.get(cid);
+    // If HEAD is the initial commit (hidden from user), treat as empty
+    if (c && c.parents.length === 0) return [];
+    return c ? [...c.recipe] : [];
+  }
   if (!sys.initialized) return [...INITIAL_RECIPE];
   return sys.local.getHeadRecipe();
 }
 
 function resetWorkingRecipe() {
-  workingRecipe = getCommittedRecipe();
+  if (currentChef === 'red') {
+    redWorkingRecipe = getCommittedRecipe();
+  } else {
+    workingRecipe = getCommittedRecipe();
+  }
+}
+
+function switchChef(chef) {
+  if (chef === currentChef) return;
+  currentChef = chef;
+  const avatar = document.getElementById('chefAvatar');
+  // Swap image instantly
+  if (chef === 'green') {
+    avatar.src = 'img/chef1.webp';
+    avatar.alt = '小蓝';
+    avatar.className = 'chef-avatar active';
+  } else {
+    avatar.src = 'img/chef2.webp';
+    avatar.alt = '小红';
+    avatar.className = 'chef-avatar active-red';
+  }
+  // Trigger pop animation (avatar stays full width throughout)
+  requestAnimationFrame(() => {
+    avatar.classList.add('pop');
+    avatar.addEventListener('animationend', () => {
+      avatar.classList.remove('pop');
+    }, { once: true });
+  });
+  render();
+  if (chef === 'red') unlockAchievement('switch_red');
+}
+
+function toggleChef() {
+  switchChef(currentChef === 'green' ? 'red' : 'green');
 }
 
 // ================================================================
 // RENDER
 // ================================================================
 function render() {
-  if (sys.initialized) {
-    renderer.render(sys.local, sys.remote);
+  const graphContent = document.getElementById('graphContent');
+  if (sys.initialized || currentChef === 'red') {
+    // Show SVG graph, hide clone guide
+    graphContent.innerHTML = '<svg id="graphSvg"></svg><div class="hover-card" id="hoverCard"><div class="hc-header" id="hcHeader"><img class="hc-avatar" id="hcAvatar" src="" alt=""><div class="hc-title-block"><div class="hc-msg" id="hcMsg"></div><div class="hc-meta" id="hcMeta"></div></div></div><div class="hc-sandwich" id="hcSandwich"></div><div class="hc-diff-label" id="hcDiffLabel"></div></div>';
+    renderer.svg = document.getElementById('graphSvg');
+    renderer.render(currentChef === 'red' ? sys.teammate : sys.local, sys.remote);
   } else {
-    // Before clone: show remote repo info
-    const svg = document.getElementById('graphSvg');
-    svg.setAttribute('width', 400);
-    svg.setAttribute('height', 100);
-    svg.setAttribute('viewBox', '0 0 400 100');
-    svg.innerHTML = '<text x="200" y="40" text-anchor="middle" fill="#666" font-size="13" font-family="-apple-system, sans-serif">☁️ 远端仓库已建好（GitHub）</text><text x="200" y="65" text-anchor="middle" fill="#999" font-size="11" font-family="-apple-system, sans-serif">点击「克隆 clone」把项目拉到本地开始工作</text>';
+    // Before clone: show guide in right panel center
+    graphContent.innerHTML = `
+      <div class="clone-guide">
+        <div class="guide-title">远端仓库已建好</div>
+        <div class="guide-desc">点击「<span class="sketch-underline-yellow">克隆仓库</span>」把项目拉到本地开始工作</div>
+        <button class="btn" onclick="doClone()">克隆仓库 clone</button>
+      </div>`;
   }
   renderChips();
   renderLeftPanel();
   setupHoverEvents();
+  updateSyncLabel();
 }
 
 function renderChips() {
   const el = document.getElementById('branchChips');
-  const repo = sys.local;
+  const repo = currentChef === 'red' ? sys.teammate : sys.local;
   const cur = repo.currentBranch();
   el.innerHTML = '';
-  if (!sys.initialized) return;
+  if (!sys.initialized && currentChef !== 'red') return;
   for (const [name] of repo.branches) {
     const chip = document.createElement('span');
     chip.className = 'branch-chip' + (name === cur ? ' current' : '');
@@ -1363,72 +2589,54 @@ function renderChips() {
 }
 
 function renderLeftPanel() {
-  const repo = sys.local;
+  const repo = currentChef === 'red' ? sys.teammate : sys.local;
 
-  if (!sys.initialized) {
-    // Before clone: show that we haven't pulled the project yet
-    document.getElementById('panelBranch').textContent = '未克隆';
-    document.getElementById('panelBranch').style.color = '#999';
-    // Show the hamburger view (preview of what's in the remote)
+  if (currentChef === 'green' && !sys.initialized) {
     renderSandwichView();
-    // Show message about cloning
-    const diffEl = document.getElementById('diffSummary');
-    diffEl.innerHTML = '远端已有项目，请先克隆到本地';
-    diffEl.style.background = '#eff6ff';
-    document.getElementById('panelMessage').textContent = '-';
-    document.getElementById('panelSync').innerHTML = '<span style="color:#999">未连接</span>';
+    document.getElementById('diffSummary').innerHTML = '';
+    document.getElementById('diffSummary').style.background = 'transparent';
     return;
   }
 
   const hc = repo.commits.get(repo.headCommit());
-
-  // Branch
-  document.getElementById('panelBranch').textContent = repo.currentBranch() || 'detached';
-  document.getElementById('panelBranch').style.color = repo.branchColors.get(repo.currentBranch()) || '#333';
 
   // Hamburger view
   renderSandwichView();
 
   // Diff summary
   renderDiffSummary();
+}
 
-  // Message
-  document.getElementById('panelMessage').textContent = hc ? hc.msg : '-';
-
-  // Sync
-  const syncEl = document.getElementById('panelSync');
-  const ahead = sys.getAhead();
-  const behind = sys.getBehind();
-  if (!ahead && !behind) {
-    syncEl.innerHTML = '<span class="synced">已同步</span>';
-  } else {
-    let html = '';
-    if (ahead > 0) html += `<span class="ahead">\u2191${ahead} 待推送</span>`;
-    if (behind > 0) html += `<span class="behind">\u2193${behind} 待拉取</span>`;
-    syncEl.innerHTML = html;
-  }
+function getRecipeById(cid) {
+  const c = sys.remote.commits.get(cid) || sys.local.commits.get(cid);
+  return c ? c.recipe : null;
 }
 
 function renderSandwichView() {
   const el = document.getElementById('sandwichView');
   el.innerHTML = '';
+  const recipe = currentChef === 'red' ? redWorkingRecipe : workingRecipe;
 
   // Top bun
   const topBread = document.createElement('div');
   topBread.className = 'sandwich-bread';
-  topBread.innerHTML = '<span class="bread-emoji">🍔</span><span class="bread-label">汉堡包（顶）</span>';
+  topBread.style.zIndex = recipe.length + 2;
+  topBread.innerHTML = '<img class="sprite-img" src="img/bun-top.webp" alt="顶面包">';
   el.appendChild(topBread);
 
   // Middle layers
-  for (let i = 0; i < workingRecipe.length; i++) {
+  for (let i = 0; i < recipe.length; i++) {
     const layer = document.createElement('div');
-    layer.className = 'sandwich-layer';
+    layer.className = 'sandwich-layer' + (recipe[i] === BAD_INGREDIENT ? ' bad' : '');
+    layer.title = getIngredientName(recipe[i]);
+    layer.style.zIndex = recipe.length - i + 1;
+    if (recipe[i] === 'tomato') layer.style.transform = 'scale(1.25)';
+    const imgSrc = getIngredientImg(recipe[i]);
     layer.innerHTML = `
-      <span class="layer-emoji">${workingRecipe[i]}</span>
-      <span class="layer-name">${getIngredientName(workingRecipe[i])}</span>
+      <img class="sprite-img" src="${imgSrc}" alt="${getIngredientName(recipe[i])}">
       <div class="layer-actions">
-        <span class="layer-btn" onclick="showModifySelector(${i}, event)" title="修改">✎</span>
-        <span class="layer-btn delete" onclick="removeLayer(${i})" title="删除">×</span>
+        <span class="layer-btn" onclick="showAIModifySelector(${i}, event)" title="让 AI 改这层"><img src="img/swap.svg" alt="swap"></span>
+        <span class="layer-btn delete" onclick="removeLayer(${i})" title="删除"><img src="img/delete.svg" alt="delete"></span>
       </div>
     `;
     el.appendChild(layer);
@@ -1437,61 +2645,134 @@ function renderSandwichView() {
   // Add layer button
   const addBtn = document.createElement('div');
   addBtn.className = 'add-layer-btn';
-  addBtn.textContent = '+ 加一层';
-  addBtn.onclick = (e) => showAddSelector(e);
+  addBtn.innerHTML = '<img src="img/plus.svg" alt="+">';
+  addBtn.title = '让 AI 加一层';
+  addBtn.onclick = (e) => showAIAddSelector(e);
   el.appendChild(addBtn);
 
   // Bottom bun
   const bottomBread = document.createElement('div');
   bottomBread.className = 'sandwich-bread';
-  bottomBread.innerHTML = '<span class="bread-emoji">🍔</span><span class="bread-label">汉堡包（底）</span>';
+  bottomBread.innerHTML = '<img class="sprite-img" src="img/bun-bottom.webp" alt="底面包">';
   el.appendChild(bottomBread);
+
+  // Auto-scale to fit container
+  requestAnimationFrame(() => {
+    const container = el.parentElement;
+    if (!container) return;
+    const containerH = container.clientHeight;
+    const contentH = el.scrollHeight;
+    if (contentH > containerH && containerH > 0) {
+      const scale = containerH / contentH;
+      el.style.transform = `scale(${Math.max(scale, 0.4)})`;
+    } else {
+      el.style.transform = '';
+    }
+  });
 }
 
 function renderDiffSummary() {
   const el = document.getElementById('diffSummary');
   const committed = getCommittedRecipe();
-  const diff = diffRecipes(committed, workingRecipe);
+  const recipe = currentChef === 'red' ? redWorkingRecipe : workingRecipe;
+  const diff = diffRecipes(committed, recipe);
   const changes = diff.filter(d => d.type !== 'same');
   if (changes.length === 0) {
-    el.innerHTML = '工作区干净（无修改）';
-    el.style.background = '#f0fdf4';
+    el.style.display = 'none';
+    el.innerHTML = '';
+    return;
   } else {
-    let html = '<strong>未存档的修改：</strong><br>';
+    el.style.display = '';
+    let html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;"><strong>未存档的修改：</strong><button class="discard-btn" onclick="discardAllChanges()">丢弃修改</button></div>';
     for (const d of changes) {
+      const imgTag = `<span style="display:inline-flex;align-items:center;justify-content:center;width:52px;text-align:center;vertical-align:middle;margin:0 2px;"><img src="${getIngredientImg(d.value)}" style="width:48px;height:24px;object-fit:contain;"></span>`;
       if (d.type === 'added') {
-        html += `<span class="added">+ 第${d.index + 1}层 新增 ${d.value} ${getIngredientName(d.value)}</span><br>`;
+        html += `<span class="added">+ 第${d.index + 1}层 新增 ${imgTag} ${getIngredientName(d.value)}</span><br>`;
       } else if (d.type === 'removed') {
-        html += `<span class="removed">- 第${d.index + 1}层 删除 ${d.value} ${getIngredientName(d.value)}</span><br>`;
-      } else if (d.type === 'modified') {
-        html += `<span class="modified">~ 第${d.index + 1}层 ${d.oldValue}${getIngredientName(d.oldValue)} → ${d.value}${getIngredientName(d.value)}</span><br>`;
+        html += `<span class="removed">- 第${d.index + 1}层 删除 ${imgTag} ${getIngredientName(d.value)}</span><br>`;
       }
     }
     el.innerHTML = html;
-    el.style.background = '#fffbeb';
+    el.style.background = 'var(--amber-soft)';
   }
+}
+
+function discardAllChanges() {
+  const committed = getCommittedRecipe();
+  if (currentChef === 'red') {
+    redWorkingRecipe = [...committed];
+  } else {
+    workingRecipe = [...committed];
+  }
+  render();
+  toast('已丢弃所有未存档的修改');
+}
+
+function commitAndSync() {
+  const input = document.getElementById('syncCommitMsg');
+  const msg = input ? input.value.trim() : '';
+  closeDialog();
+  // Do commit
+  if (currentChef === 'red') {
+    const other = sys.teammate;
+    const branch = other.currentBranch() || 'main';
+    const parent = other.branches.get(branch);
+    other.commitCounter++;
+    // Sync counter before generating ID to prevent collision
+    other.counter = Math.max(other.counter, sys.local.counter, sys.remote.counter);
+    const id = 'c' + (other.counter++);
+    let commitMsg = msg;
+    if (!commitMsg) {
+      const parentCommit = other.commits.get(parent);
+      const parentRecipe = parentCommit ? (parentCommit.parents.length === 0 ? [] : parentCommit.recipe) : [];
+      commitMsg = generateRealisticMsg(parentRecipe, redWorkingRecipe);
+    }
+    other.commits.set(id, { id, msg: commitMsg, parents: [parent], recipe: [...redWorkingRecipe], author: '小红' });
+    other.branches.set(branch, id);
+    sys.local.counter = Math.max(sys.local.counter, other.counter);
+    sys.remote.counter = Math.max(sys.remote.counter, other.counter);
+    redWorkingRecipe = getCommittedRecipe();
+  } else {
+    sys.local.commit('', msg, workingRecipe, '小蓝');
+    resetWorkingRecipe();
+    unlockAchievement('first_commit');
+  }
+  render();
+  toast('已存档');
+  // Then sync
+  setTimeout(() => doSync(), 100);
 }
 
 // ================================================================
 // INGREDIENT SELECTOR
 // ================================================================
-function showIngredientSelector(x, y, callback, excludeEmoji) {
+function showIngredientSelector(x, y, callback, excludeEmoji, anchorEl) {
   const sel = document.getElementById('ingredientSelector');
   sel.innerHTML = '';
-  sel.style.left = x + 'px';
-  sel.style.top = y + 'px';
   sel.classList.add('show');
 
+  // Build options first so we can measure
   for (const ing of INGREDIENTS) {
-    if (ing.emoji === excludeEmoji) continue;
+    if (ing.id === excludeEmoji) continue;
     const opt = document.createElement('span');
     opt.className = 'ing-option';
-    opt.innerHTML = `${ing.emoji} ${ing.name}`;
+    opt.innerHTML = `<img class="sprite-img" src="${ing.img}" style="width:32px;height:auto;max-height:20px;object-fit:contain"> ${ing.name}`;
     opt.onclick = () => {
-      callback(ing.emoji);
+      callback(ing.id);
       hideIngredientSelector();
     };
     sel.appendChild(opt);
+  }
+
+  // Position: right of anchor, vertically centered
+  if (anchorEl) {
+    const rect = anchorEl.getBoundingClientRect();
+    const selRect = sel.getBoundingClientRect();
+    sel.style.left = (rect.right + 10) + 'px';
+    sel.style.top = (rect.top + rect.height / 2 - selRect.height / 2) + 'px';
+  } else {
+    sel.style.left = x + 'px';
+    sel.style.top = y + 'px';
   }
 
   // Close on outside click
@@ -1511,59 +2792,96 @@ function hideIngredientSelector() {
   document.getElementById('ingredientSelector').classList.remove('show');
 }
 
-function showModifySelector(index, event) {
-  event.stopPropagation();
-  const rect = event.target.getBoundingClientRect();
-  showIngredientSelector(rect.right + 4, rect.top, (emoji) => {
-    workingRecipe[index] = emoji;
-    renderLeftPanel();
-  }, workingRecipe[index]);
+// AI 翻车率（0-100）
+let _failRate = 0;
+
+function updateFailRate(val) {
+  _failRate = parseInt(val);
+  document.getElementById('failRateLabel').textContent = _failRate + '%';
 }
 
-function showAddSelector(event) {
+function isFailMode() {
+  return Math.random() * 100 < _failRate;
+}
+
+function showAIModifySelector(index, event) {
   event.stopPropagation();
-  const rect = event.target.getBoundingClientRect();
+  const anchorEl = event.currentTarget;
+  const rect = anchorEl.getBoundingClientRect();
+  const recipe = currentChef === 'red' ? redWorkingRecipe : workingRecipe;
+  const shouldFail = isFailMode();
   showIngredientSelector(rect.right + 4, rect.top, (emoji) => {
-    workingRecipe.push(emoji);
-    renderLeftPanel();
-  });
+    recipe[index] = emoji;
+    if (shouldFail && recipe.length > 1) {
+      const otherIndices = [...Array(recipe.length).keys()].filter(i => i !== index);
+      const victimIdx = otherIndices[Math.floor(Math.random() * otherIndices.length)];
+      recipe[victimIdx] = BAD_INGREDIENT;
+      renderLeftPanel();
+      toast(`AI 改好了第${index + 1}层，但第${victimIdx + 1}层好像被改坏了…`, true);
+      unlockAchievement('ai_fail');
+    } else {
+      renderLeftPanel();
+      toast(`AI 把第${index + 1}层改成了 ${toastImg(emoji)} ${getIngredientName(emoji)}`);
+    }
+  }, recipe[index], anchorEl);
+}
+
+// AI 执行添加一层
+function showAIAddSelector(event) {
+  event.stopPropagation();
+  if (!sys.initialized) { toast('请先克隆仓库', true); return; }
+  const anchorEl = event.currentTarget;
+  const rect = anchorEl.getBoundingClientRect();
+  const recipe = currentChef === 'red' ? redWorkingRecipe : workingRecipe;
+  const shouldFail = isFailMode();
+  showIngredientSelector(rect.right + 4, rect.top, (emoji) => {
+    recipe.push(emoji);
+    if (shouldFail && recipe.length > 1) {
+      const otherIndices = [...Array(recipe.length - 1).keys()];
+      const victimIdx = otherIndices[Math.floor(Math.random() * otherIndices.length)];
+      recipe[victimIdx] = BAD_INGREDIENT;
+      renderLeftPanel();
+      toast(`AI 加了 ${toastImg(emoji)}，但第${victimIdx + 1}层好像被改坏了…`, true);
+      unlockAchievement('ai_fail');
+    } else {
+      renderLeftPanel();
+      toast(`AI 加了 ${toastImg(emoji)} ${getIngredientName(emoji)}`);
+    }
+  }, undefined, anchorEl);
 }
 
 function removeLayer(index) {
-  if (workingRecipe.length <= 1) {
-    toast('至少保留一层食材', true);
-    return;
-  }
-  workingRecipe.splice(index, 1);
+  const recipe = currentChef === 'red' ? redWorkingRecipe : workingRecipe;
+  recipe.splice(index, 1);
   renderLeftPanel();
 }
 
 // ================================================================
 // HOVER INTERACTION
 // ================================================================
-const hoverCard = document.getElementById('hoverCard');
-const graphContainer = document.getElementById('graphContainer');
+const hoverCard = { get el() { return document.getElementById('hoverCard'); } };
+let _lastHoverCommitId = null;
 
 function setupHoverEvents() {
   const svg = document.getElementById('graphSvg');
+  if (!svg) return;
   svg.onmousemove = handleSvgMouseMove;
   svg.onmouseleave = hideHoverCard;
 }
 
 function handleSvgMouseMove(e) {
   const target = e.target;
-  const commitId = target.dataset && target.dataset.commitId;
-  if (commitId) {
-    showHoverCard(commitId, e);
-  } else {
+  let commitId = target.dataset && target.dataset.commitId;
+  if (!commitId) {
     const parent = target.closest ? target.closest('g') : target.parentElement;
     if (parent) {
       const hitEl = parent.querySelector('[data-commit-id]');
-      if (hitEl) {
-        showHoverCard(hitEl.dataset.commitId, e);
-        return;
-      }
+      if (hitEl) commitId = hitEl.dataset.commitId;
     }
+  }
+  if (commitId) {
+    showHoverCard(commitId, e);
+  } else {
     hideHoverCard();
   }
 }
@@ -1572,86 +2890,102 @@ function showHoverCard(commitId, e) {
   const nodeData = renderer.nodeData.find(n => n.id === commitId);
   if (!nodeData || nodeData.isUnreachable) { hideHoverCard(); return; }
 
-  const allCommits = renderer.allCommits;
+  const card = hoverCard.el;
+  if (!card) return;
 
-  const msgEl = document.getElementById('hcMsg');
-  const sandwichEl = document.getElementById('hcSandwich');
-  const diffLabel = document.getElementById('hcDiffLabel');
+  // Only rebuild content if commit changed (prevents PNG flicker)
+  if (_lastHoverCommitId !== commitId) {
+    _lastHoverCommitId = commitId;
+    const allCommits = renderer.allCommits;
+    const msgEl = document.getElementById('hcMsg');
+    const metaEl = document.getElementById('hcMeta');
+    const sandwichEl = document.getElementById('hcSandwich');
+    const diffLabel = document.getElementById('hcDiffLabel');
+    const avatarEl = document.getElementById('hcAvatar');
 
-  msgEl.textContent = (nodeData.author ? `[${nodeData.author}] ` : '') + nodeData.msg;
-  sandwichEl.innerHTML = '';
-
-  // Get parent recipe for diff
-  let parentRecipe = null;
-  if (nodeData.parents.length > 0) {
-    const parentCommit = allCommits.get(nodeData.parents[0]);
-    if (parentCommit && parentCommit.recipe) {
-      parentRecipe = parentCommit.recipe;
-    }
-  }
-
-  if (nodeData.recipe) {
-    // Top bun
-    const topBread = document.createElement('span');
-    topBread.className = 'hc-bread';
-    topBread.textContent = '🍔';
-    sandwichEl.appendChild(topBread);
-
-    // Compute diff with parent
-    let diff = null;
-    if (parentRecipe) {
-      diff = diffRecipes(parentRecipe, nodeData.recipe);
-    }
-
-    // Show layers with diff coloring
-    if (diff) {
-      for (const d of diff) {
-        const layer = document.createElement('span');
-        layer.className = 'hc-layer';
-        if (d.type === 'added') {
-          layer.classList.add('diff-added');
-          layer.textContent = `${d.value} ${getIngredientName(d.value)}`;
-        } else if (d.type === 'removed') {
-          layer.classList.add('diff-removed');
-          layer.textContent = `${d.value} ${getIngredientName(d.value)}`;
-        } else if (d.type === 'modified') {
-          layer.classList.add('diff-modified');
-          layer.textContent = `${d.value} ${getIngredientName(d.value)}`;
-        } else {
-          layer.textContent = `${d.value} ${getIngredientName(d.value)}`;
-        }
-        sandwichEl.appendChild(layer);
-      }
-      diffLabel.textContent = '绿=新增 红=删除 黄=修改';
+    msgEl.textContent = nodeData.msg;
+    // Show meta: author + short hash
+    const shortHash = commitId.slice(0, 7);
+    metaEl.textContent = `${nodeData.author || ''}  ${shortHash}`;
+    // Show committer avatar
+    if (nodeData.author) {
+      avatarEl.src = nodeData.author === '小红' ? 'img/chef2.webp' : 'img/chef1.webp';
+      avatarEl.style.display = 'block';
     } else {
-      for (const ing of nodeData.recipe) {
-        const layer = document.createElement('span');
-        layer.className = 'hc-layer';
-        layer.textContent = `${ing} ${getIngredientName(ing)}`;
-        sandwichEl.appendChild(layer);
+      avatarEl.style.display = 'none';
+    }
+    sandwichEl.innerHTML = '';
+
+    let parentRecipe = null;
+    if (nodeData.parents.length > 0) {
+      const parentCommit = allCommits.get(nodeData.parents[0]);
+      // If parent is the initial commit (hidden from user), treat as empty
+      if (parentCommit && parentCommit.recipe) {
+        parentRecipe = parentCommit.parents.length === 0 ? [] : parentCommit.recipe;
       }
-      diffLabel.textContent = '';
     }
 
-    // Bottom bun
-    const bottomBread = document.createElement('span');
-    bottomBread.className = 'hc-bread';
-    bottomBread.textContent = '🍔';
-    sandwichEl.appendChild(bottomBread);
-  } else {
-    diffLabel.textContent = '';
+    if (nodeData.recipe) {
+      let diff = parentRecipe ? diffRecipes(parentRecipe, nodeData.recipe) : null;
+      if (diff) {
+        for (const d of diff) {
+          const layer = document.createElement('span');
+          layer.className = 'hc-layer';
+          let prefix = '';
+          if (d.type === 'added') { layer.classList.add('diff-added'); prefix = '+ '; }
+          else if (d.type === 'removed') { layer.classList.add('diff-removed'); prefix = '- '; }
+          layer.innerHTML = `${prefix}<span style="display:inline-flex;align-items:center;justify-content:center;width:52px;vertical-align:middle;margin-right:3px;"><img src="${getIngredientImg(d.value)}" style="width:48px;height:24px;object-fit:contain;"></span>${getIngredientName(d.value)}`;
+          sandwichEl.appendChild(layer);
+        }
+        const addCount = diff.filter(d => d.type === 'added').length;
+        const delCount = diff.filter(d => d.type === 'removed').length;
+        let statsHtml = '';
+        const parts = [];
+        if (addCount) parts.push(`<span class="legend-item legend-add">${addCount} 层插入(+)</span>`);
+        if (delCount) parts.push(`<span class="legend-item legend-del">${delCount} 层删除(-)</span>`);
+        statsHtml += parts.join(', ');
+        diffLabel.innerHTML = statsHtml;
+      } else {
+        for (const ing of nodeData.recipe) {
+          const layer = document.createElement('span');
+          layer.className = 'hc-layer';
+          layer.innerHTML = `<img src="${getIngredientImg(ing)}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:3px;">${getIngredientName(ing)}`;
+          sandwichEl.appendChild(layer);
+        }
+        diffLabel.innerHTML = '';
+      }
+    } else {
+      diffLabel.innerHTML = '';
+    }
   }
 
-  // Position card
-  let cardX = nodeData.x + 24;
-  let cardY = nodeData.y - 10;
-  hoverCard.style.left = cardX + 'px';
-  hoverCard.style.top = cardY + 'px';
-  hoverCard.classList.add('visible');
+  // Position using mouse coordinates relative to graphContent container
+  const container = card.parentElement;
+  if (!container) return;
+  const rect = container.getBoundingClientRect();
+  let cardX = e.clientX - rect.left + container.scrollLeft + 14;
+  let cardY = e.clientY - rect.top + container.scrollTop - 14;
+
+  // Prevent overflow
+  const cardW = card.offsetWidth || 180;
+  const cardH = card.offsetHeight || 100;
+  if (cardX + cardW > container.scrollLeft + container.clientWidth) {
+    cardX = e.clientX - rect.left + container.scrollLeft - cardW - 10;
+  }
+  if (cardY + cardH > container.scrollTop + container.clientHeight) {
+    cardY = container.scrollTop + container.clientHeight - cardH - 4;
+  }
+  if (cardY < container.scrollTop) cardY = container.scrollTop + 4;
+
+  card.style.left = cardX + 'px';
+  card.style.top = cardY + 'px';
+  card.classList.add('visible');
 }
 
 function hideHoverCard() {
-  hoverCard.classList.remove('visible');
+  _lastHoverCommitId = null;
+  const card = hoverCard.el;
+  if (card) card.classList.remove('visible');
 }
 
 // ================================================================
@@ -1659,13 +2993,47 @@ function hideHoverCard() {
 // ================================================================
 function requireInit() {
   if (!sys.initialized) {
-    toast('请先点击「克隆 clone」拉取项目', true);
+    toast('请先在右侧点击「克隆仓库 clone」拉取项目', true);
     return false;
   }
   return true;
 }
 
 function doCommit() {
+  if (currentChef === 'red') {
+    // 小红视角的提交
+    const committed = getCommittedRecipe();
+    const { added, removed, modified } = diffSummary(committed, redWorkingRecipe);
+    if (added === 0 && removed === 0 && modified === 0) {
+      toast('小红工作区没有修改，无需存档', true);
+      return;
+    }
+    openDialog('小红存档 (commit)', '描述这次改了什么', val => {
+      const other = sys.teammate;
+      const branch = other.currentBranch() || 'main';
+      const parent = other.branches.get(branch);
+      other.commitCounter++;
+      // Sync counter before generating ID to prevent collision
+      other.counter = Math.max(other.counter, sys.local.counter, sys.remote.counter);
+      const id = 'c' + (other.counter++);
+      let msg = val;
+      if (!msg) {
+        const parentCommit = other.commits.get(parent);
+        const parentRecipe = parentCommit ? (parentCommit.parents.length === 0 ? [] : parentCommit.recipe) : [];
+        msg = generateRealisticMsg(parentRecipe, redWorkingRecipe);
+      }
+      other.commits.set(id, { id, msg, parents: [parent], recipe: [...redWorkingRecipe], author: '小红' });
+      other.branches.set(branch, id);
+      sys.local.counter = Math.max(sys.local.counter, other.counter);
+      sys.remote.counter = Math.max(sys.remote.counter, other.counter);
+      redWorkingRecipe = getCommittedRecipe();
+      render();
+      toast('小红已存档 → ' + msg);
+      _redCommitted = true;
+      if (_redCommitted && _redPushed) unlockAchievement('team_collab');
+    });
+    return;
+  }
   if (!requireInit()) return;
   const committed = getCommittedRecipe();
   const { added, removed, modified } = diffSummary(committed, workingRecipe);
@@ -1674,10 +3042,11 @@ function doCommit() {
     return;
   }
   openDialog('存档 (commit)', '描述这次改了什么', val => {
-    const id = sys.local.commit('绿', val, workingRecipe, '小绿');
+    const id = sys.local.commit('', val, workingRecipe, '小蓝');
     resetWorkingRecipe();
     render();
     toast('已存档 → ' + sys.local.commits.get(id).msg);
+    unlockAchievement('first_commit');
   });
 }
 
@@ -1692,6 +3061,7 @@ function showBranchDialog(andCheckout) {
       resetWorkingRecipe();
       render();
       toast(andCheckout ? `checkout -b ${val}` : `branch ${val}`);
+      unlockAchievement('first_branch');
     } catch(e) { toast(e.message, true); }
   });
 }
@@ -1711,29 +3081,158 @@ function doDeleteBranch(name) {
   catch(e) { toast(e.message, true); }
 }
 
+// ====== 门店状态 Dialog ======
+function showStoreDialog() {
+  const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
+  const prodRecipe = publishState.production ? getRecipeById(publishState.production) : null;
+  const canaryRecipe = publishState.canary ? getRecipeById(publishState.canary) : null;
+  const prodBad = prodRecipe && isBadRecipe(prodRecipe);
+  const canaryBad = canaryRecipe && isBadRecipe(canaryRecipe);
+
+  let prodHtml, canaryHtml;
+  if (publishState.production) {
+    const thumbs = renderRecipeThumb(prodRecipe);
+    const cls = prodBad ? 'publish-row bad' : 'publish-row live';
+    const label = prodBad ? '线上 (客诉!)' : '线上';
+    prodHtml = `<div class="${cls}"><div class="publish-label">${label}</div><div class="publish-sandwich">${thumbs}</div></div>`;
+  } else {
+    prodHtml = '<div class="publish-row"><div class="publish-label">线上</div><div class="publish-sandwich"><span class="empty-text">无</span></div></div>';
+  }
+  if (publishState.canary) {
+    const thumbs = renderRecipeThumb(canaryRecipe);
+    const cls = canaryBad ? 'publish-row bad' : 'publish-row canary';
+    const label = canaryBad ? '试吃 (投诉!)' : '试吃';
+    canaryHtml = `<div class="${cls}"><div class="publish-label">${label}</div><div class="publish-sandwich">${thumbs}</div></div>`;
+  } else {
+    canaryHtml = '<div class="publish-row"><div class="publish-label">试吃</div><div class="publish-sandwich"><span class="empty-text">无</span></div></div>';
+  }
+
+  dl.innerHTML = `<h3>门店状态</h3><div class="panel-publish" style="margin-bottom:0.8rem;">${prodHtml}${canaryHtml}</div><div class="dialog-btns"><button class="btn" onclick="closeDialog()">关闭</button></div>`;
+  ov.classList.add('show');
+}
+
+// ====== 发布功能 ======
+function showPublishDialog() {
+  if (!sys.initialized) { toast('请先克隆仓库', true); return; }
+  // 发布只能发布远端 main 上的 commit
+  const remoteTip = sys.remote.branches.get('main');
+  if (!remoteTip) { toast('远端没有 main 分支', true); return; }
+  const remoteCommit = sys.remote.commits.get(remoteTip);
+  if (!remoteCommit || remoteCommit.parents.length === 0) { toast('远端还没有正式提交，请先同步', true); return; }
+
+  const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
+  const currentProd = publishState.production;
+  const currentCanary = publishState.canary;
+
+  let statusHtml = '<div class="panel-publish" style="margin-bottom:0.8rem;">';
+  statusHtml += `<div class="publish-row${currentProd ? ' live' : ''}"><div class="publish-label">线上版本</div><div class="publish-sandwich">${currentProd ? renderRecipeThumb(getRecipeById(currentProd)) : '<span class="empty-text">无</span>'}</div></div>`;
+  statusHtml += `<div class="publish-row${currentCanary ? ' canary' : ''}"><div class="publish-label">试吃版本</div><div class="publish-sandwich">${currentCanary ? renderRecipeThumb(getRecipeById(currentCanary)) : '<span class="empty-text">无</span>'}</div></div>`;
+  statusHtml += '</div>';
+
+  const tipMsg = remoteCommit.msg;
+  let btnsHtml = '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.8rem;">';
+  
+  if (currentCanary === remoteTip) {
+    // 已经在试吃了，可以全量
+    btnsHtml += `<button class="btn" onclick="doPublish('full')">试吃通过 → 全店供应</button>`;
+    btnsHtml += `<button class="btn danger" onclick="doPublish('rollback')">试吃失败 → 回滚</button>`;
+  } else {
+    btnsHtml += `<button class="btn" onclick="doPublish('canary')">试吃发布（小流量）</button>`;
+    btnsHtml += `<button class="btn" onclick="doPublish('full')">全店发布（全量）</button>`;
+  }
+  btnsHtml += '</div>';
+
+  dl.innerHTML = `<h3>发布 · ${tipMsg}</h3><p style="font-size:0.72rem;color:#888;">将远端 main 最新版本发布到门店</p>${statusHtml}${btnsHtml}<div class="dialog-btns"><button class="btn" onclick="closeDialog()">取消</button></div>`;
+  ov.classList.add('show');
+}
+
+function getMsgById(cid) {
+  const c = sys.remote.commits.get(cid) || sys.local.commits.get(cid);
+  return c ? c.msg : cid;
+}
+
+function renderRecipeThumb(recipe) {
+  if (!recipe || recipe.length === 0) return '<span class="empty-text">空</span>';
+  const total = recipe.length;
+  let html = '<div class="mini-burger">';
+  html += `<img class="mini-bread top" src="img/bun-top.webp" alt="顶面包" style="z-index:${total + 2}">`;
+  for (let i = 0; i < total; i++) {
+    const z = total - i + 1;
+    html += `<div class="mini-layer" style="z-index:${z}"><img src="${getIngredientImg(recipe[i])}" alt="${getIngredientName(recipe[i])}"></div>`;
+  }
+  html += `<img class="mini-bread" src="img/bun-bottom.webp" alt="底面包" style="z-index:1">`;
+  html += '</div>';
+  return html;
+}
+
+function renderRecipeInline(recipe) {
+  if (!recipe || recipe.length === 0) return '';
+  return recipe.map(ing => `<span style="display:inline-flex;align-items:center;justify-content:center;width:52px;vertical-align:middle;"><img src="${getIngredientImg(ing)}" alt="${getIngredientName(ing)}" style="width:48px;height:24px;object-fit:contain;"></span>`).join('');
+}
+
+function doPublish(type) {
+  const remoteTip = sys.remote.branches.get('main');
+  if (type === 'canary') {
+    publishState.canary = remoteTip;
+    closeDialog(); render();
+    toast('试吃发布成功！只有部分顾客能尝到新菜');
+    unlockAchievement('canary_pub');
+    // Track bad canary for rollback_fix achievement
+    const canaryRecipe = getRecipeById(publishState.canary);
+    if (canaryRecipe && isBadRecipe(canaryRecipe)) {
+      _hadBadProduction = true;
+    }
+  } else if (type === 'full') {
+    publishState.production = publishState.canary || remoteTip;
+    publishState.canary = null;
+    closeDialog(); render();
+    toast('全店发布成功！所有顾客都能点到新菜了');
+    unlockAchievement('full_pub');
+    // Track bad production for rollback_fix achievement
+    const prodRecipe = getRecipeById(publishState.production);
+    if (prodRecipe && isBadRecipe(prodRecipe)) {
+      _hadBadProduction = true;
+    }
+  } else if (type === 'rollback') {
+    // Check if rolling back from a bad state
+    if (_hadBadProduction) {
+      unlockAchievement('rollback_fix');
+      _hadBadProduction = false;
+    }
+    publishState.canary = null;
+    closeDialog(); render();
+    toast('已回滚，试吃版本已下线');
+  }
+}
+
 function showMergeDialog() {
   const repo = sys.local; const cur = repo.currentBranch();
   if (!cur) { toast('HEAD 未指向分支', true); return; }
   const others = [...repo.branches.keys()].filter(b => b !== cur);
-  if (!others.length) { toast('没有其他分支', true); return; }
+  if (!others.length) { toast('没有其他分支可合并', true); return; }
   const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
-  dl.innerHTML = `<h3>合并到 ${cur}</h3><div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-bottom:0.8rem">${others.map(b => `<button class="btn" onclick="doMerge('${b}')">${b}</button>`).join('')}</div><div class="dialog-btns"><button class="btn" onclick="closeDialog()">取消</button></div>`;
+  dl.innerHTML = `<h3>提 PR：将 ${cur} 合入目标分支</h3><p style="color:var(--text-3);font-size:12px;margin:0 0 0.6rem">选择要合入的目标分支：</p><div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-bottom:0.8rem">${others.map(b => `<button class="btn" onclick="doMerge('${b}')" style="position:relative">${cur} → ${b}</button>`).join('')}</div><div class="dialog-btns"><button class="btn" onclick="closeDialog()">取消</button></div>`;
   ov.classList.add('show');
 }
 
-function doMerge(b) {
+function doMerge(targetBranch) {
   try {
-    const result = sys.local.merge(b);
+    const repo = sys.local;
+    const sourceBranch = repo.currentBranch();
+    // 切到目标分支，将源分支合入
+    repo.checkout(targetBranch);
+    const result = repo.merge(sourceBranch);
     if (result.type === 'recipe-conflict') {
       closeDialog();
       render();
-      showMergeRecipeConflictDialog(b, result);
+      showMergeRecipeConflictDialog(sourceBranch, result);
       return;
     }
     closeDialog();
     resetWorkingRecipe();
     render();
-    toast(result.type === 'fast-forward' ? `fast-forward merge ${b}` : `merge ${b}`);
+    toast(result.type === 'fast-forward' ? `PR 合并成功（fast-forward）：${sourceBranch} → ${targetBranch}` : `PR 合并成功：${sourceBranch} → ${targetBranch}`);
+    unlockAchievement('first_merge');
   } catch(e) { toast(e.message, true); }
 }
 
@@ -1748,26 +3247,26 @@ function showMergeRecipeConflictDialog(targetBranch, conflictResult) {
 
   const conflictIndices = new Set(conflicts.map(c => c.index));
 
-  let oursHtml = '<span class="preview-bread">🍔</span>';
+  let oursHtml = '<span class="preview-bread"></span>';
   for (let i = 0; i < curRecipe.length; i++) {
     const cls = conflictIndices.has(i) ? ' conflict' : '';
     oursHtml += `<span class="preview-layer${cls}">${curRecipe[i]} ${getIngredientName(curRecipe[i])}</span>`;
   }
-  oursHtml += '<span class="preview-bread">🍔</span>';
+  oursHtml += '<span class="preview-bread"></span>';
 
-  let theirsHtml = '<span class="preview-bread">🍔</span>';
+  let theirsHtml = '<span class="preview-bread"></span>';
   for (let i = 0; i < targetRecipe.length; i++) {
     const cls = conflictIndices.has(i) ? ' conflict' : '';
     theirsHtml += `<span class="preview-layer${cls}">${targetRecipe[i]} ${getIngredientName(targetRecipe[i])}</span>`;
   }
-  theirsHtml += '<span class="preview-bread">🍔</span>';
+  theirsHtml += '<span class="preview-bread"></span>';
 
   dl.innerHTML = `
     <h3>配方冲突!</h3>
     <p>合并 <b>${targetBranch}</b> → <b>${cur}</b> 时，${conflicts.length} 层发生冲突（红框标出）：</p>
     <div class="recipe-compare">
       <div class="side">
-        <div class="side-label">小绿的 (${cur})</div>
+        <div class="side-label">小蓝的 (${cur})</div>
         <div class="sandwich-preview">${oursHtml}</div>
       </div>
       <div class="side">
@@ -1776,7 +3275,7 @@ function showMergeRecipeConflictDialog(targetBranch, conflictResult) {
       </div>
     </div>
     <div class="dialog-btns" style="flex-direction:column;align-items:stretch;">
-      <button class="btn" onclick="resolveMergeRecipe('mine')">保留小绿的</button>
+      <button class="btn" onclick="resolveMergeRecipe('mine')">保留小蓝的</button>
       <button class="btn" onclick="resolveMergeRecipe('theirs')">保留小红的</button>
       <button class="btn active" onclick="resolveMergeRecipe('both')">合并两者</button>
     </div>`;
@@ -1802,23 +3301,25 @@ function resolveMergeRecipe(strategy) {
   resetWorkingRecipe();
   closeDialog();
   render();
-  const labels = { mine: '保留小绿的配方', theirs: '保留小红的配方', both: '合并两者' };
+  const labels = { mine: '保留小蓝的配方', theirs: '保留小红的配方', both: '合并两者' };
   toast(`配方冲突已解决: ${labels[strategy]}`);
+  unlockAchievement('first_merge');
 }
 
 function doReset() {
   if (!requireInit()) return;
   const history = sys.local.getHistory();
   if (history.length <= 1) { toast('已是第一个提交，无法回退', true); return; }
-  // Show selection dialog (skip current HEAD which is history[0])
-  const options = history.slice(1);
+  // Show selection dialog (skip current HEAD and filter out initial commit)
+  const options = history.slice(1).filter(c => c.parents.length > 0);
+  if (!options.length) { toast('没有可回退的存档', true); return; }
   const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
   let optHtml = options.map(c => {
     const author = c.author ? `[${c.author}]` : '';
-    const recipe = c.recipe ? c.recipe.join('') : '';
-    return `<button class="btn" style="text-align:left;width:100%;margin-bottom:4px;" onclick="confirmReset('${c.id}')"><b>${c.msg}</b> <span style="color:#888;font-size:0.7rem">${author} ${recipe}</span></button>`;
+    const recipeHtml = c.recipe ? renderRecipeInline(c.recipe) : '';
+    return `<button class="btn" style="text-align:left;width:100%;margin-bottom:4px;" onclick="confirmReset('${c.id}')"><b>${c.msg}</b> <span style="color:#888;font-size:0.7rem">${author}</span><br>${recipeHtml}</button>`;
   }).join('');
-  dl.innerHTML = `<h3>回退到哪个存档？(reset)</h3><p style="font-size:0.72rem;color:#888;">回退 = 删掉后面的存档，回到选中的版本。<b>未 push 的提交会丢失！</b></p><div style="max-height:200px;overflow-y:auto;margin-bottom:0.7rem;">${optHtml}</div><div class="dialog-btns"><button class="btn" onclick="closeDialog()">取消</button></div>`;
+  dl.innerHTML = `<h3>回退到哪个存档？(reset)</h3><p style="font-size:0.72rem;color:#888;">回退 = 删掉后面的存档，回到选中的版本。<b>未同步的存档会丢失！</b></p><div style="max-height:200px;overflow-y:auto;margin-bottom:0.7rem;">${optHtml}</div><div class="dialog-btns"><button class="btn" onclick="closeDialog()">取消</button></div>`;
   ov.classList.add('show');
 }
 
@@ -1829,6 +3330,7 @@ function confirmReset(targetId) {
     closeDialog();
     render();
     toast('reset → ' + sys.local.commits.get(targetId).msg);
+    unlockAchievement('first_reset');
   } catch(e) { toast(e.message, true); }
 }
 
@@ -1842,10 +3344,10 @@ function doRevert() {
   const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
   let optHtml = options.map(c => {
     const author = c.author ? `[${c.author}]` : '';
-    const recipe = c.recipe ? c.recipe.join('') : '';
-    return `<button class="btn" style="text-align:left;width:100%;margin-bottom:4px;" onclick="confirmRevert('${c.id}')"><b>${c.msg}</b> <span style="color:#888;font-size:0.7rem">${author} ${recipe}</span></button>`;
+    const recipeHtml = c.recipe ? renderRecipeInline(c.recipe) : '';
+    return `<button class="btn" style="text-align:left;width:100%;margin-bottom:4px;" onclick="confirmRevert('${c.id}')"><b>${c.msg}</b> <span style="color:#888;font-size:0.7rem">${author}</span><br>${recipeHtml}</button>`;
   }).join('');
-  dl.innerHTML = `<h3>撤销哪个提交？(revert)</h3><p style="font-size:0.72rem;color:#888;">撤销 = 新增一个「反向操作」的存档，历史不变。<b>安全，适合已 push 的提交。</b></p><div style="max-height:200px;overflow-y:auto;margin-bottom:0.7rem;">${optHtml}</div><div class="dialog-btns"><button class="btn" onclick="closeDialog()">取消</button></div>`;
+  dl.innerHTML = `<h3>撤销哪个提交？(revert)</h3><p style="font-size:0.72rem;color:#888;">撤销 = 新增一个「反向操作」的存档，历史不变。<b>安全，适合已同步的提交。</b></p><div style="max-height:200px;overflow-y:auto;margin-bottom:0.7rem;">${optHtml}</div><div class="dialog-btns"><button class="btn" onclick="closeDialog()">取消</button></div>`;
   ov.classList.add('show');
 }
 
@@ -1860,25 +3362,145 @@ function confirmRevert(targetId) {
 }
 
 function doPush() {
-  try { sys.push(); render(); toast('push 成功 — 已推送到远端（备份+共享）'); }
+  if (currentChef === 'red') {
+    try {
+      const repo = sys.teammate;
+      const branch = repo.currentBranch() || 'main';
+      const tip = repo.branches.get(branch);
+      const rtip = sys.remote.branches.get(branch);
+      if (tip === rtip) { toast('已是最新', true); return; }
+      // Check if remote is ahead (has commits teammate doesn't have)
+      if (rtip && !repo._isAnc(rtip, tip)) {
+        toast('远端有新提交，请先同步拉取', true);
+        return;
+      }
+      // Push teammate's commits to remote
+      const visited = new Set();
+      const stack = [tip];
+      while (stack.length) {
+        const cid = stack.pop();
+        if (!cid || visited.has(cid) || sys.remote.commits.has(cid)) continue;
+        visited.add(cid);
+        const c = repo.commits.get(cid);
+        if (c) {
+          sys.remote.commits.set(cid, { ...c, recipe: c.recipe ? [...c.recipe] : undefined });
+          stack.push(...c.parents);
+        }
+      }
+      if (!sys.remote.branches.has(branch)) sys.remote.branchColors.set(branch, repo.branchColors.get(branch) || '#dc2626');
+      sys.remote.branches.set(branch, tip);
+      sys.remote.counter = Math.max(sys.remote.counter, repo.counter);
+      sys.local.counter = Math.max(sys.local.counter, sys.remote.counter);
+      repo.remoteRefs.set('origin/' + branch, tip);
+      render();
+      toast('同步成功 — 小红的存档已上传到远端');
+      _redPushed = true;
+      if (_redCommitted && _redPushed) unlockAchievement('team_collab');
+    } catch(e) { toast(e.message, true); }
+    return;
+  }
+  try { sys.push(); render(); toast('同步成功 — 存档已上传到远端'); unlockAchievement('first_sync'); }
   catch(e) { toast(e.message, true); }
 }
 
 function doFetch() {
-  try { const n = sys.fetch(); render(); toast(`fetch: +${n} 个新提交`); }
+  try { const n = sys.fetch(); render(); toast(`远端发现 +${n} 个新存档`); }
   catch(e) { toast(e.message, true); }
+}
+
+function doTeammatePull() {
+  try {
+    const result = sys.pullForTeammate();
+    if (result.type === 'up-to-date') { render(); toast('已是最新'); return; }
+    if (result.type === 'fast-forward') { redWorkingRecipe = getCommittedRecipe(); render(); toast('已同步远端的新存档'); return; }
+    if (result.type === 'auto-merge') { redWorkingRecipe = getCommittedRecipe(); render(); toast('自动合并成功（改的是不同位置）'); return; }
+    render();
+    pendingConflictInfo = result;
+    showConflictDialog(result);
+  } catch(e) { toast(e.message, true); }
 }
 
 function doPull() {
   try {
     const result = sys.pull();
     if (result.type === 'up-to-date') { render(); toast('已是最新'); return; }
-    if (result.type === 'fast-forward') { resetWorkingRecipe(); render(); toast('pull (fast-forward)'); return; }
-    if (result.type === 'auto-merge') { resetWorkingRecipe(); render(); toast('pull: 自动合并（改的是不同位置）'); return; }
+    if (result.type === 'fast-forward') { resetWorkingRecipe(); render(); toast('已同步远端的新存档'); unlockAchievement('first_pull'); return; }
+    if (result.type === 'auto-merge') { resetWorkingRecipe(); render(); toast('自动合并成功（改的是不同位置）'); unlockAchievement('first_pull'); return; }
     render();
     pendingConflictInfo = result;
     showConflictDialog(result);
+    unlockAchievement('first_pull');
   } catch(e) { toast(e.message, true); }
+}
+
+// 同步按钮：pull 优先，再 push（符合 git 概念：先拉再推）
+function doSync() {
+  if (!sys.initialized) { toast('请先克隆仓库', true); return; }
+
+  // 检查工作区是否有未提交的修改
+  const committed = getCommittedRecipe();
+  const recipe = currentChef === 'red' ? redWorkingRecipe : workingRecipe;
+  const diff = diffRecipes(committed, recipe);
+  const hasUncommitted = diff.some(d => d.type !== 'same');
+  if (hasUncommitted) {
+    const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
+    dl.innerHTML = `<h3>工作区有未存档修改</h3><p style="font-size:0.78rem;color:#666;margin-bottom:0.6rem;">同步前需要先存档（commit）。请输入存档信息：</p><input id="syncCommitMsg" class="dialog-input" placeholder="描述这次改了什么" autofocus /><div class="dialog-btns" style="margin-top:0.8rem;"><button class="btn danger" onclick="closeDialog();discardAllChanges();doSync();">丢弃修改并同步</button><button class="btn" onclick="closeDialog()">取消</button><button class="btn dark" onclick="commitAndSync()">存档并同步</button></div>`;
+    ov.classList.add('show');
+    // Focus input and handle Enter key
+    setTimeout(() => {
+      const input = document.getElementById('syncCommitMsg');
+      if (input) {
+        input.focus();
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') commitAndSync(); });
+      }
+    }, 50);
+    return;
+  }
+
+  const behind = currentChef === 'red' ? sys.getTeammateBehind() : sys.getBehind();
+  const ahead = currentChef === 'red' ? sys.getTeammateAhead() : sys.getAhead();
+
+  if (behind > 0) {
+    // 远端有新内容，先 pull
+    if (currentChef === 'red') {
+      doTeammatePull();
+    } else {
+      doPull();
+    }
+  } else if (ahead > 0) {
+    // 本地有待推送，push
+    doPush();
+  } else {
+    toast('已同步，无需操作');
+  }
+}
+
+// 更新同步按钮标签
+function updateSyncLabel() {
+  const zhEl = document.getElementById('syncZh');
+  const enEl = document.getElementById('syncEn');
+  if (!zhEl || !enEl) return;
+  if (!sys.initialized) { zhEl.textContent = '同步'; enEl.textContent = 'sync'; return; }
+
+  let ahead, behind;
+  if (currentChef === 'red') {
+    ahead = sys.getTeammateAhead();
+    behind = sys.getTeammateBehind();
+  } else {
+    ahead = sys.getAhead();
+    behind = sys.getBehind();
+  }
+
+  if (!ahead && !behind) {
+    zhEl.textContent = '同步';
+    enEl.textContent = 'sync';
+  } else {
+    let badge = '';
+    if (behind > 0) badge += `\u2193${behind} `;
+    if (ahead > 0) badge += `\u2191${ahead}`;
+    zhEl.textContent = '同步';
+    enEl.textContent = `sync ${badge.trim()}`;
+  }
 }
 
 function showConflictDialog(conflictResult) {
@@ -1890,24 +3512,24 @@ function showConflictDialog(conflictResult) {
     const { localRecipe, remoteRecipe, conflicts } = conflictResult;
     const conflictIndices = new Set(conflicts.map(c => c.index));
 
-    let localHtml = '<span class="preview-bread">🍔</span>';
+    let localHtml = '<span class="preview-bread"></span>';
     for (let i = 0; i < localRecipe.length; i++) {
       const cls = conflictIndices.has(i) ? ' conflict' : '';
       localHtml += `<span class="preview-layer${cls}">${localRecipe[i]} ${getIngredientName(localRecipe[i])}</span>`;
     }
-    localHtml += '<span class="preview-bread">🍔</span>';
+    localHtml += '<span class="preview-bread"></span>';
 
-    let remoteHtml = '<span class="preview-bread">🍔</span>';
+    let remoteHtml = '<span class="preview-bread"></span>';
     for (let i = 0; i < remoteRecipe.length; i++) {
       const cls = conflictIndices.has(i) ? ' conflict' : '';
       remoteHtml += `<span class="preview-layer${cls}">${remoteRecipe[i]} ${getIngredientName(remoteRecipe[i])}</span>`;
     }
-    remoteHtml += '<span class="preview-bread">🍔</span>';
+    remoteHtml += '<span class="preview-bread"></span>';
 
     recipeHtml = `
       <div class="recipe-compare">
         <div class="side">
-          <div class="side-label">小绿的汉堡</div>
+          <div class="side-label">小蓝的汉堡</div>
           <div class="sandwich-preview">${localHtml}</div>
         </div>
         <div class="side">
@@ -1919,10 +3541,10 @@ function showConflictDialog(conflictResult) {
 
   dl.innerHTML = `
     <h3>合并冲突</h3>
-    <p>小绿和小红都修改了同一层食材。${hasRecipeConflict ? `${conflictResult.conflicts.length} 层冲突（红框标出）：` : 'Git 无法自动合并，需要你决定怎么处理：'}</p>
+    <p>小蓝和小红都修改了同一层食材。${hasRecipeConflict ? `${conflictResult.conflicts.length} 层冲突（红框标出）：` : 'Git 无法自动合并，需要你决定怎么处理：'}</p>
     ${recipeHtml}
     <div class="dialog-btns" style="flex-direction:column;align-items:stretch;">
-      <button class="btn" onclick="resolveConflict('mine')">保留小绿的</button>
+      <button class="btn" onclick="resolveConflict('mine')">保留小蓝的</button>
       <button class="btn" onclick="resolveConflict('theirs')">保留小红的</button>
       <button class="btn active" onclick="resolveConflict('both')">合并两者</button>
     </div>`;
@@ -1935,7 +3557,7 @@ function resolveConflict(strategy) {
   resetWorkingRecipe();
   closeDialog();
   render();
-  const labels = { mine: '保留小绿的', theirs: '保留小红的', both: '合并两者' };
+  const labels = { mine: '保留小蓝的', theirs: '保留小红的', both: '合并两者' };
   toast(`冲突已解决: ${labels[strategy]}`);
 }
 
@@ -1966,12 +3588,10 @@ function doClone() {
   repo.HEAD = { type: 'branch', ref: 'main' };
   repo.counter = Math.max(repo.counter, remote.counter);
   sys.initialized = true;
-  // Hide the clone section after success
-  const cloneGroup = document.querySelector('.controls .ctrl-group:first-child');
-  if (cloneGroup) cloneGroup.style.display = 'none';
   resetWorkingRecipe();
   render();
   toast('clone 成功 — 已从远端拉取项目到本地');
+  unlockAchievement('first_clone');
 }
 
 // === Dialog utils ===
@@ -1987,8 +3607,11 @@ document.getElementById('dialogOverlay').onclick = e => { if (e.target === e.cur
 
 function toast(m, err) {
   const el = document.getElementById('toast');
-  el.textContent = m; el.className = 'toast show' + (err ? ' error' : '');
+  el.innerHTML = m; el.className = 'toast show' + (err ? ' error' : '');
   clearTimeout(el._t); el._t = setTimeout(() => el.className = 'toast', 2000);
+}
+function toastImg(id) {
+  return `<img src="${getIngredientImg(id)}" style="height:18px;width:auto;vertical-align:middle;margin:0 2px;">`;
 }
 
 function toggleAdvanced() {
@@ -2003,7 +3626,100 @@ function toggleAdvanced() {
   }
 }
 
+// ================================================================
+// ACHIEVEMENT SYSTEM
+// ================================================================
+const achievements = [
+  { id: 'first_clone',    name: '初来乍到',   desc: '完成第一次克隆', done: false },
+  { id: 'first_commit',   name: '第一份汉堡', desc: '完成第一次存档', done: false },
+  { id: 'first_sync',     name: '送出厨房',   desc: '完成第一次同步', done: false },
+  { id: 'switch_red',     name: '换个视角',   desc: '第一次切换到小红视角', done: false },
+  { id: 'team_collab',    name: '团队协作',   desc: '小红也完成一次存档 + 同步', done: false },
+  { id: 'first_pull',     name: '远端有货',   desc: '同步时拉到了别人的新存档', done: false },
+  { id: 'ai_fail',        name: 'AI 翻车了',  desc: '第一次触发 AI 翻车（生成了坏食材）', done: false },
+  { id: 'first_reset',    name: '时光倒流',   desc: '完成第一次回退', done: false },
+  { id: 'first_branch',   name: '开辟新路',   desc: '创建第一个新分支', done: false },
+  { id: 'first_merge',    name: '殊途同归',   desc: '完成第一次合并', done: false },
+  { id: 'canary_pub',     name: '试营业',    desc: '完成第一次试吃发布', done: false },
+  { id: 'full_pub',       name: '正式开业',   desc: '完成第一次全店发布', done: false },
+  { id: 'rollback_fix',   name: '翻车善后',   desc: '发布后出现客诉，然后成功回滚', done: false },
+  { id: 'graduate',       name: '毕业厨师',   desc: '解锁以上所有成就', done: false },
+];
+
+// Track sub-conditions for team_collab
+let _redCommitted = false;
+let _redPushed = false;
+// Track sub-condition for rollback_fix
+let _hadBadProduction = false;
+
+function getAchievementCount() {
+  return achievements.filter(a => a.done).length;
+}
+
+function updateAchProgress() {
+  const el = document.getElementById('achProgress');
+  if (el) el.textContent = ` ${getAchievementCount()}/${achievements.length}`;
+}
+
+function unlockAchievement(id) {
+  const ach = achievements.find(a => a.id === id);
+  if (!ach || ach.done) return;
+  ach.done = true;
+  saveAchievements();
+  // Show special toast
+  const el = document.getElementById('toast');
+  el.innerHTML = `成就解锁：${ach.name}`;
+  el.className = 'toast show achievement';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = 'toast', 2800);
+  updateAchProgress();
+  // Check graduate
+  checkGraduate();
+}
+
+function saveAchievements() {
+  const data = achievements.reduce((o, a) => { if (a.done) o[a.id] = true; return o; }, {});
+  try { localStorage.setItem('git-kitchen-achievements', JSON.stringify(data)); } catch(e) {}
+}
+
+function loadAchievements() {
+  try {
+    const data = JSON.parse(localStorage.getItem('git-kitchen-achievements') || '{}');
+    achievements.forEach(a => { if (data[a.id]) a.done = true; });
+  } catch(e) {}
+  updateAchProgress();
+}
+
+function checkGraduate() {
+  const allOthers = achievements.filter(a => a.id !== 'graduate');
+  if (allOthers.every(a => a.done)) {
+    setTimeout(() => unlockAchievement('graduate'), 1200);
+  }
+}
+
+function showAchievementPanel() {
+  const ov = document.getElementById('dialogOverlay');
+  const dl = document.getElementById('dialog');
+  const count = getAchievementCount();
+  let listHtml = achievements.map(a => {
+    const cls = a.done ? 'achievement-item done' : 'achievement-item';
+    const check = a.done ? '✓' : '○';
+    return `<div class="${cls}"><div class="ach-info"><div class="ach-name">${a.name}</div><div class="ach-desc">${a.desc}</div></div><span class="ach-check">${check}</span></div>`;
+  }).join('');
+  dl.innerHTML = `<div class="achievement-panel"><h3>闯关成就</h3><div class="ach-subtitle">进度：${count} / ${achievements.length}</div><div class="achievement-list">${listHtml}</div><div class="dialog-btns" style="margin-top:0.8rem;"><button class="btn" onclick="resetAchievements()">重置</button><button class="btn" onclick="closeDialog()">关闭</button></div></div>`;
+  ov.classList.add('show');
+}
+
+function resetAchievements() {
+  achievements.forEach(a => a.done = false);
+  try { localStorage.removeItem('git-kitchen-achievements'); } catch(e) {}
+  updateAchProgress();
+  closeDialog();
+  toast('成就已重置');
+}
+
 // Initial render
+loadAchievements();
 render();
 </script>
 </body>
