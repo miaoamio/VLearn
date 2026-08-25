@@ -397,6 +397,10 @@ mark.sketch-mark {
 .sprite-img {
   width: 100%;
   height: auto;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  pointer-events: none;
 }
 
 .sandwich-layer {
@@ -417,7 +421,11 @@ mark.sketch-mark {
 }
 .sandwich-layer:hover { background: transparent; z-index: 99 !important; }
 .sandwich-layer:hover .sprite-img {
-  filter: drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff);
+  filter:
+    drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff)
+    drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff)
+    drop-shadow(1px 1px 0 #fff) drop-shadow(-1px 1px 0 #fff)
+    drop-shadow(1px -1px 0 #fff) drop-shadow(-1px -1px 0 #fff);
   transition: filter 0.15s;
 }
 .sandwich-layer .layer-emoji { font-size: 1.1rem; }
@@ -1094,24 +1102,24 @@ mark.sketch-mark {
   }
 
   .main-layout {
-    flex-direction: column;
+    flex-direction: row;
     padding: 10px;
     gap: 10px;
-    flex: none;
+    flex: 1;
     min-height: 0;
   }
 
   .left-panel {
-    flex: none;
-    min-height: 280px;
-    max-height: 45vh;
+    flex: 1;
+    min-height: 0;
+    max-height: none;
     overflow: hidden;
   }
 
   .graph-container {
-    flex: none;
-    min-height: 300px;
-    max-height: 50vh;
+    flex: 1;
+    min-height: 0;
+    max-height: none;
   }
 
   .action-bar {
@@ -1171,8 +1179,8 @@ mark.sketch-mark {
   }
 
   .left-panel {
-    min-height: 240px;
-    max-height: 40vh;
+    min-height: 0;
+    max-height: none;
   }
 
   .panel-header-row {
@@ -1898,9 +1906,10 @@ class GitSystem {
     if (!this.remote.branches.has(branch)) this.remote.branchColors.set(branch, repo.branchColors.get(branch));
     this.remote.branches.set(branch, tip);
     this.remote.counter = Math.max(this.remote.counter, repo.counter);
-    // Sync all repo counters to prevent ID collisions
     this.teammate.counter = Math.max(this.teammate.counter, this.remote.counter);
+    // Keep remoteRefs in sync after successful push (both local & teammate)
     repo.remoteRefs.set('origin/' + branch, tip);
+    this.teammate.remoteRefs.set('origin/' + branch, tip);
   }
 
   fetch() {
@@ -1926,7 +1935,10 @@ class GitSystem {
     if (!rid) throw new Error('没有对应远端分支');
     const lid = repo.branches.get(branch);
     if (lid === rid || repo._isAnc(rid, lid)) return { type: 'up-to-date' };
-    if (repo._isAnc(lid, rid)) { repo.branches.set(branch, rid); return { type: 'fast-forward', id: rid }; }
+    if (repo._isAnc(lid, rid)) {
+      repo.branches.set(branch, rid);
+      return { type: 'fast-forward', id: rid };
+    }
 
     const baseId = findMergeBase(repo, lid, rid);
     const baseCommit = repo.commits.get(baseId);
@@ -1941,6 +1953,8 @@ class GitSystem {
       const id = repo._id();
       repo.commits.set(id, { id, msg: '合并', parents: [lid, rid], recipe: mergedRecipe, author: '小蓝' });
       repo.branches.set(branch, id);
+      repo.remoteRefs.set('origin/' + branch, rid);
+      this.teammate.remoteRefs.set('origin/' + branch, rid);
       return { type: 'auto-merge', id };
     }
 
@@ -1966,7 +1980,6 @@ class GitSystem {
       msg = '合并(保留对方)';
       recipe = [...remoteRecipe];
     } else {
-      // 'both' - use merged recipe, resolve conflicts with ours
       msg = '合并';
       recipe = [...(conflictInfo ? conflictInfo.mergedRecipe : localRecipe)];
       for (const c of conflicts) {
@@ -1976,6 +1989,11 @@ class GitSystem {
 
     repo.commits.set(id, { id, msg, parents: [lid, rid], recipe, author: '小蓝' });
     repo.branches.set(branch, id);
+    // Update remoteRefs to reflect that remote tip has been integrated
+    if (rid) {
+      repo.remoteRefs.set('origin/' + branch, rid);
+      this.teammate.remoteRefs.set('origin/' + branch, rid);
+    }
     return id;
   }
 
@@ -2007,6 +2025,10 @@ class GitSystem {
 
     repo.commits.set(id, { id, msg, parents: [lid, rid], recipe, author: '小红' });
     repo.branches.set(branch, id);
+    if (rid) {
+      repo.remoteRefs.set('origin/' + branch, rid);
+      this.local.remoteRefs.set('origin/' + branch, rid);
+    }
     return id;
   }
 
@@ -2042,25 +2064,126 @@ class GitSystem {
     const repo = this.local;
     const branch = repo.currentBranch();
     if (!branch) return 0;
-    return repo.getNewCommits(branch, this.remote).length;
+    const localTip = repo.branches.get(branch);
+    const remoteTip = repo.remoteRefs.get('origin/' + branch);
+    if (!localTip || !remoteTip) return localTip ? 1 : 0;
+    if (localTip === remoteTip) return 0;
+    if (repo._isAnc(localTip, remoteTip)) return 0;
+    // Count commits reachable from localTip but NOT from remoteTip
+    const vis = new Set(), q = [remoteTip];
+    while (q.length) {
+      const id = q.shift();
+      if (!id || vis.has(id)) continue;
+      vis.add(id);
+      const c = repo.commits.get(id) || this.remote.commits.get(id);
+      if (c) q.push(...c.parents);
+    }
+    // BFS from local tip, skip nodes reachable from remote
+    const localVis = new Set(), lq = [localTip];
+    let count = 0;
+    while (lq.length) {
+      const id = lq.shift();
+      if (!id || localVis.has(id) || vis.has(id)) continue;
+      localVis.add(id);
+      count++;
+      const c = repo.commits.get(id);
+      if (c) lq.push(...c.parents);
+    }
+    // Subtract 1 if the tip is a merge commit (a merge commit itself shouldn't count
+    // as "ahead work"; it represents integration, not new local changes to push)
+    // BUT: if there's only the merge commit + we counted it as 1, keep as 1 so
+    // the UI still shows ↑1 to indicate there's a merge commit to push
+    return count;
   }
 
   getBehind() {
-    const branch = this.local.currentBranch();
+    const repo = this.local;
+    const branch = repo.currentBranch();
     if (!branch) return 0;
-    return this.remote.getNewCommits(branch, this.local).length;
+    const localTip = repo.branches.get(branch);
+    const remoteTip = repo.remoteRefs.get('origin/' + branch);
+    if (!remoteTip || !localTip) return remoteTip ? 1 : 0;
+    if (localTip === remoteTip) return 0;
+    if (repo._isAnc(remoteTip, localTip)) return 0;
+    const vis = new Set(), q = [localTip];
+    while (q.length) {
+      const id = q.shift();
+      if (!id || vis.has(id)) continue;
+      vis.add(id);
+      const c = repo.commits.get(id) || this.remote.commits.get(id);
+      if (c) q.push(...c.parents);
+    }
+    const remoteVis = new Set(), rq = [remoteTip];
+    let count = 0;
+    while (rq.length) {
+      const id = rq.shift();
+      if (!id || remoteVis.has(id) || vis.has(id)) continue;
+      remoteVis.add(id);
+      count++;
+      const c = this.remote.commits.get(id) || repo.commits.get(id);
+      if (c) rq.push(...c.parents);
+    }
+    return count;
   }
 
   getTeammateAhead() {
-    const branch = this.teammate.currentBranch() || 'main';
+    const repo = this.teammate;
+    const branch = repo.currentBranch() || 'main';
     if (!branch) return 0;
-    return this.teammate.getNewCommits(branch, this.remote).length;
+    const localTip = repo.branches.get(branch);
+    const remoteTip = repo.remoteRefs.get('origin/' + branch);
+    if (!localTip || !remoteTip) return localTip ? 1 : 0;
+    if (localTip === remoteTip) return 0;
+    if (repo._isAnc(localTip, remoteTip)) return 0;
+    const vis = new Set(), q = [remoteTip];
+    while (q.length) {
+      const id = q.shift();
+      if (!id || vis.has(id)) continue;
+      vis.add(id);
+      const c = this.remote.commits.get(id) || repo.commits.get(id);
+      if (c) q.push(...c.parents);
+    }
+    const localVis = new Set(), lq = [localTip];
+    let count = 0;
+    while (lq.length) {
+      const id = lq.shift();
+      if (!id || localVis.has(id) || vis.has(id)) continue;
+      localVis.add(id);
+      count++;
+      const c = repo.commits.get(id);
+      if (c) lq.push(...c.parents);
+    }
+    return count;
   }
 
   getTeammateBehind() {
-    const branch = this.teammate.currentBranch() || 'main';
+    const repo = this.teammate;
+    const branch = repo.currentBranch() || 'main';
     if (!branch) return 0;
-    return this.remote.getNewCommits(branch, this.teammate).length;
+    const localTip = repo.branches.get(branch);
+    const remoteTip = repo.remoteRefs.get('origin/' + branch);
+    if (!remoteTip || !localTip) return remoteTip ? 1 : 0;
+    if (localTip === remoteTip) return 0;
+    if (repo._isAnc(remoteTip, localTip)) return 0;
+    const vis = new Set(), q = [localTip];
+    while (q.length) {
+      const id = q.shift();
+      if (!id || vis.has(id)) continue;
+      vis.add(id);
+      const c = repo.commits.get(id) || this.remote.commits.get(id);
+      if (c) q.push(...c.parents);
+    }
+    const remoteVis = new Set(), rq = [remoteTip];
+    let count = 0;
+    while (rq.length) {
+      const id = rq.shift();
+      if (!id || remoteVis.has(id) || vis.has(id)) continue;
+      remoteVis.add(id);
+      count++;
+      const c = this.remote.commits.get(id) || repo.commits.get(id);
+      if (c) rq.push(...c.parents);
+    }
+    return count;
   }
 
   fetchForTeammate() {
@@ -2085,7 +2208,10 @@ class GitSystem {
     if (!rid) throw new Error('没有对应远端分支');
     const lid = repo.branches.get(branch);
     if (lid === rid || repo._isAnc(rid, lid)) return { type: 'up-to-date' };
-    if (repo._isAnc(lid, rid)) { repo.branches.set(branch, rid); return { type: 'fast-forward', id: rid }; }
+    if (repo._isAnc(lid, rid)) {
+      repo.branches.set(branch, rid);
+      return { type: 'fast-forward', id: rid };
+    }
 
     const baseId = findMergeBase(repo, lid, rid);
     const baseCommit = repo.commits.get(baseId);
@@ -2100,6 +2226,8 @@ class GitSystem {
       const id = repo._id();
       repo.commits.set(id, { id, msg: '合并', parents: [lid, rid], recipe: mergedRecipe, author: '小红' });
       repo.branches.set(branch, id);
+      repo.remoteRefs.set('origin/' + branch, rid);
+      this.local.remoteRefs.set('origin/' + branch, rid);
       return { type: 'auto-merge', id };
     }
 
@@ -2114,7 +2242,7 @@ class UnifiedRenderer {
   constructor(svg) {
     this.svg = svg;
     this.R = 6;
-    this.xGap = 70;
+    this.xGap = 160;
     this.yGap = 36;
     this.pad = { t: 30, l: 30, r: 360, b: 30 };
     this.nodeData = [];
@@ -2301,6 +2429,30 @@ class UnifiedRenderer {
         cId = cm && cm.parents.length ? cm.parents[0] : null;
       }
     }
+
+    // Assign separate lanes for remote ref tips that diverge from local branches
+    for (const [refName, refId] of localRepo.remoteRefs) {
+      if (!refId || commitLane.has(refId)) continue;
+      // This remote ref points to a commit not yet assigned a lane - it diverged
+      const remoteLane = li++;
+      let cId = refId;
+      while (cId && !commitLane.has(cId)) {
+        commitLane.set(cId, remoteLane);
+        const cm = allCommits.get(cId);
+        cId = cm && cm.parents.length ? cm.parents[0] : null;
+      }
+    }
+    // Also check remote repo branches directly
+    for (const [bn, bid] of remoteRepo.branches) {
+      if (!bid || commitLane.has(bid)) continue;
+      const remoteLane = li++;
+      let cId = bid;
+      while (cId && !commitLane.has(cId)) {
+        commitLane.set(cId, remoteLane);
+        const cm = allCommits.get(cId);
+        cId = cm && cm.parents.length ? cm.parents[0] : null;
+      }
+    }
     // Flatten linear chains: if a parent has only one child, both should be on same lane
     // Use the parent's lane as authority (since main is assigned first)
     const sorted = commits.slice().sort((a, b) => (levels.get(a.id) || 0) - (levels.get(b.id) || 0));
@@ -2379,7 +2531,16 @@ class UnifiedRenderer {
       t.setAttribute('dy', '0.35em'); t.setAttribute('fill', 'oklch(0.70 0.008 95)');
       t.setAttribute('font-size', '11'); t.setAttribute('font-weight', '400');
       t.setAttribute('font-family', '-apple-system, sans-serif');
-      t.textContent = n.msg;
+      let uMsg = n.msg;
+      if (n._maxTextWidth != null && n._maxTextWidth > 0) {
+        let w = 0, ti = uMsg.length;
+        for (let i = 0; i < uMsg.length; i++) {
+          w += uMsg.charCodeAt(i) > 127 ? 11 : 11 * 0.6;
+          if (w > n._maxTextWidth - 12) { ti = i; break; }
+        }
+        if (ti < uMsg.length) uMsg = uMsg.slice(0, ti) + '...';
+      }
+      t.textContent = uMsg;
       g.appendChild(t);
       this.svg.appendChild(g);
       return;
@@ -2553,10 +2714,8 @@ sys.remote.init(INITIAL_RECIPE);
 sys._copyRepo(sys.remote, sys.teammate);
 sys.teammate.remoteRefs.set('origin/main', sys.remote.branches.get('main'));
 
-// Auto-clone for green chef so both perspectives start at the same state
-sys._copyRepo(sys.remote, sys.local);
-sys.local.remoteRefs.set('origin/main', sys.remote.branches.get('main'));
-sys.initialized = true;
+// Green chef starts un-cloned — user must click "克隆仓库" to proceed
+sys.initialized = false;
 
 // Working recipe state (editable in left panel)
 let workingRecipe = [];
@@ -3442,12 +3601,10 @@ function doPush() {
       const tip = repo.branches.get(branch);
       const rtip = sys.remote.branches.get(branch);
       if (tip === rtip) { toast('已是最新', true); return; }
-      // Check if remote is ahead (has commits teammate doesn't have)
       if (rtip && !repo._isAnc(rtip, tip)) {
         toast('远端有新提交，请先同步拉取', true);
         return;
       }
-      // Push teammate's commits to remote
       const visited = new Set();
       const stack = [tip];
       while (stack.length) {
@@ -3465,6 +3622,7 @@ function doPush() {
       sys.remote.counter = Math.max(sys.remote.counter, repo.counter);
       sys.local.counter = Math.max(sys.local.counter, sys.remote.counter);
       repo.remoteRefs.set('origin/' + branch, tip);
+      sys.local.remoteRefs.set('origin/' + branch, tip);
       render();
       toast('同步成功 — 小红的存档已上传到远端');
       _redPushed = true;
@@ -3530,18 +3688,31 @@ function doSync() {
     return;
   }
 
+  // 先 fetch 获取远端最新状态，再判断 behind/ahead
+  if (currentChef === 'red') {
+    sys.fetchForTeammate();
+  } else {
+    sys.fetch();
+  }
+
   const behind = currentChef === 'red' ? sys.getTeammateBehind() : sys.getBehind();
   const ahead = currentChef === 'red' ? sys.getTeammateAhead() : sys.getAhead();
 
   if (behind > 0) {
-    // 远端有新内容，先 pull
+    // 远端有新内容，先 pull（pull 内部含 fetch + merge）
     if (currentChef === 'red') {
       doTeammatePull();
     } else {
       doPull();
     }
+    // pull 成功且本地仍有待推送时，自动继续 push
+    setTimeout(() => {
+      if (!pendingConflictInfo) {
+        const stillAhead = currentChef === 'red' ? sys.getTeammateAhead() : sys.getAhead();
+        if (stillAhead > 0) doPush();
+      }
+    }, 50);
   } else if (ahead > 0) {
-    // 本地有待推送，push
     doPush();
   } else {
     toast('已同步，无需操作');
@@ -3579,6 +3750,8 @@ function updateSyncLabel() {
 function showConflictDialog(conflictResult) {
   const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
   const hasRecipeConflict = conflictResult && conflictResult.conflicts && conflictResult.conflicts.length > 0;
+  const myLabel = currentChef === 'red' ? '小红' : '小蓝';
+  const theirLabel = currentChef === 'red' ? '小蓝' : '小红';
 
   let recipeHtml = '';
   if (hasRecipeConflict) {
@@ -3611,9 +3784,6 @@ function showConflictDialog(conflictResult) {
         </div>
       </div>`;
   }
-
-  const myLabel = currentChef === 'red' ? '小红' : '小蓝';
-  const theirLabel = currentChef === 'red' ? '小蓝' : '小红';
 
   dl.innerHTML = `
     <h3>合并冲突</h3>
