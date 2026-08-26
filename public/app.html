@@ -1,13 +1,12 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
+<html lang="zh-CN"><head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Git 概念厨房</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M15 55h70v8c0 4-3 7-7 7H22c-4 0-7-3-7-7v-8z' fill='%23D2691E'/><rect x='20' y='50' width='60' height='5' rx='2' fill='%2332CD32'/><rect x='18' y='42' width='64' height='10' rx='3' fill='%23CD853F'/><path d='M15 45c0-18 15-30 35-30s35 12 35 30H15z' fill='%23F4A460'/><circle cx='35' cy='35' r='2' fill='%23FFF5E1'/><circle cx='55' cy='30' r='2' fill='%23FFF5E1'/><circle cx='70' cy='38' r='2' fill='%23FFF5E1'/></svg>">
+<link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;path d='M15 55h70v8c0 4-3 7-7 7H22c-4 0-7-3-7-7v-8z' fill='%23D2691E'/&gt;&lt;rect x='20' y='50' width='60' height='5' rx='2' fill='%2332CD32'/&gt;&lt;rect x='18' y='42' width='64' height='10' rx='3' fill='%23CD853F'/&gt;&lt;path d='M15 45c0-18 15-30 35-30s35 12 35 30H15z' fill='%23F4A460'/&gt;&lt;circle cx='35' cy='35' r='2' fill='%23FFF5E1'/&gt;&lt;circle cx='55' cy='30' r='2' fill='%23FFF5E1'/&gt;&lt;circle cx='70' cy='38' r='2' fill='%23FFF5E1'/&gt;&lt;/svg&gt;">
 <style>
 @font-face {
   font-family: 'Handwritten';
@@ -1474,10 +1473,10 @@ mark.sketch-mark {
 
 <div class="top-container">
 <div class="header">
-  <h1><span style="font-family: var(--font-hand); font-weight: 900; font-size: 26px; margin-right: 2px; color: var(--text);">Git</span> 概念厨房</h1>
+  <h1><span style="font-family: var(--font-hand); font-weight: 900; font-size: 26px; margin-right: 2px; color: var(--text);">Git</span>&nbsp;珍妮的憨八嘎</h1>
   <div class="header-right">
     <button class="capsule-btn no-border" onclick="showStoreDialog()"><img src="img/shop.webp" style="width:16px;height:18px;object-fit:contain;" alt="">门店</button>
-    <button class="capsule-btn" onclick="showAchievementPanel()"><img src="img/honor.webp" style="width:16px;height:18px;object-fit:contain;" alt="">成就 <span class="achievement-progress" id="achProgress"></span></button>
+    <button class="capsule-btn" onclick="showAchievementPanel()"><img src="img/honor.webp" style="width:16px;height:18px;object-fit:contain;" alt="">成就 <span class="achievement-progress" id="achProgress"> 0/18</span></button>
   </div>
 </div>
 
@@ -1503,7 +1502,7 @@ mark.sketch-mark {
       </label>
     </div>
     <div class="panel-section" style="flex:1;min-height:0;overflow:hidden;padding-top:24px;display:flex;align-items:flex-start;justify-content:center;">
-      <div class="sandwich-view" id="sandwichView"></div>
+      <div class="sandwich-view" id="sandwichView"><div class="sandwich-bread" style="z-index: 2;"><img class="sprite-img" src="img/bun-top.webp" alt="顶面包"></div><div class="add-layer-btn" title="让 AI 加一层" style="translate: none; rotate: none; scale: none; margin-bottom: 0px; margin-top: 0px; height: 0px; transform: scale(0.6, 0.6); opacity: 0;"><img src="img/plus.svg" alt="+"></div><div class="sandwich-bread"><img class="sprite-img" src="img/bun-bottom.webp" alt="底面包"></div></div>
     </div>
 
     <div class="chef-switcher" id="chefSwitcher">
@@ -1520,20 +1519,12 @@ mark.sketch-mark {
       </div>
     </div>
     <div class="graph-content" id="graphContent">
-      <svg id="graphSvg"></svg>
-      <div class="hover-card" id="hoverCard">
-        <div class="hc-header" id="hcHeader">
-          <img class="hc-avatar" id="hcAvatar" src="" alt="">
-          <div class="hc-title-block">
-            <div class="hc-msg" id="hcMsg"></div>
-            <div class="hc-meta" id="hcMeta"></div>
-          </div>
-        </div>
-        <div class="hc-sandwich" id="hcSandwich"></div>
-        <div class="hc-diff-label" id="hcDiffLabel"></div>
-      </div>
-    </div>
-    <div class="diff-summary" id="diffSummary"></div>
+      <div class="clone-guide">
+        <div class="guide-title">远端仓库已建好</div>
+        <div class="guide-desc">点击「<span class="sketch-underline-yellow">克隆仓库</span>」把项目拉到本地开始工作</div>
+        <button class="btn" onclick="doClone()">克隆仓库 clone</button>
+      </div></div>
+    <div class="diff-summary" id="diffSummary" style="background: transparent;"></div>
   </div>
 </div>
 
@@ -4499,5 +4490,6 @@ function resetAchievements() {
 loadAchievements();
 render();
 </script>
-</body>
-</html>
+
+
+</body></html>

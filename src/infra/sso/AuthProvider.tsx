@@ -1,19 +1,14 @@
-import {
-  createContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from 'react';
+import { type ReactNode, createContext, useEffect, useState } from 'react';
 
 import { AccessDeniedPage } from './AccessDeniedPage';
 import {
   AccessDeniedError,
+  type UserResponse,
   checkArtifactSiteAuthorization,
   fetchCurrentUser,
   getAuthService,
   redirectToSSO,
   resolveJwt,
-  type UserResponse,
 } from './auth';
 
 export type AuthContextValue = {
@@ -26,15 +21,19 @@ export type AuthContextValue = {
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserResponse | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const isDev = process.env.NODE_ENV === 'development';
+  const [user, setUser] = useState<UserResponse | null>(
+    isDev ? { username: 'dev', name: 'Dev User' } : null,
+  );
+  const [token, setToken] = useState<string | null>(isDev ? 'dev-token' : null);
+  const [isLoading, setIsLoading] = useState(!isDev);
   const [loadError, setLoadError] = useState(false);
   const [accessDeniedOwner, setAccessDeniedOwner] = useState<string | null>(
     null,
   );
 
   useEffect(() => {
+    if (isDev) return;
     let cancelled = false;
 
     const initAuth = async () => {
@@ -123,7 +122,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, []);
-
 
   const logout = async () => {
     try {
