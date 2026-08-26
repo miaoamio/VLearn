@@ -4,7 +4,7 @@ export default function Page() {
       <iframe
         className="vlearn-frame"
         src="/app.html"
-        title="Git 概念厨房"
+        title="今天吃点什么？"
         allow="clipboard-read; clipboard-write"
       />
     </main>
