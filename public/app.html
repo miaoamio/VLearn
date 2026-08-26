@@ -484,7 +484,7 @@ mark.sketch-mark {
 
 .add-layer-btn {
   width: 40px;
-  height: 40px;
+  height: 0;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -493,21 +493,22 @@ mark.sketch-mark {
   background: white;
   border: none;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  margin: 32px auto -20px auto;
+  margin: 0 auto;
   font-size: 0;
   color: var(--text);
   cursor: pointer;
-  transition: box-shadow 0.15s, transform 0.12s;
   flex-shrink: 0;
   position: relative;
   z-index: 10;
+  opacity: 0;
+  transform: scale(0.6);
+  overflow: hidden;
 }
 .add-layer-btn img {
   width: 24px;
   height: 24px;
   display: block;
 }
-.add-layer-btn:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.13); transform: scale(1.05); }
 .add-layer-btn:active { transform: scale(0.95); }
 
 .add-layer-row {
@@ -1542,6 +1543,7 @@ mark.sketch-mark {
 <div class="toast" id="toast"></div>
 <div class="ingredient-selector" id="ingredientSelector"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <script>
 
 // ================================================================
@@ -2873,22 +2875,54 @@ function renderChips() {
     chip.textContent = name;
     chip.onclick = () => {
       if (name === repo.currentBranch()) return;
+      // 判断当前是否有未提交修改
+      const oldHeadRecipe = repo.getHeadRecipe();
+      const isClean = JSON.stringify(getChef().workingRecipe) === JSON.stringify(oldHeadRecipe);
+      if (!isClean) {
+        // 有未存档修改，弹出拦截对话框
+        const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
+        dl.innerHTML = `
+          <h3>切换分支</h3>
+          <p style="font-size:0.75rem;color:var(--text-2);margin:0 0 0.8rem;">当前工作区有未存档的修改，切换前需要处理：</p>
+          <div class="dialog-btns" style="flex-direction:column;align-items:stretch;gap:6px;">
+            <button class="btn dark" onclick="doCheckoutWithCommit('${name}')">存档后再切换</button>
+            <button class="btn" onclick="doCheckoutDiscard('${name}')">丢弃修改并切换</button>
+            <button class="btn" onclick="closeDialog()">取消</button>
+          </div>`;
+        ov.classList.add('show');
+        return;
+      }
       try {
-        // 判断当前是否有未提交修改
-        const oldHeadRecipe = repo.getHeadRecipe();
-        const isClean = JSON.stringify(getChef().workingRecipe) === JSON.stringify(oldHeadRecipe);
         repo.checkout(name);
-        if (isClean) {
-          // 无未提交修改：工作区切换为目标分支的已提交状态（真实 Git 行为）
-          resetWorkingRecipe();
-        }
-        // 有未提交修改：保留工作区（模拟 Git 的 carry-over 行为）
+        resetWorkingRecipe();
         render();
         toast(`checkout → ${name}`);
       } catch(e) { toast(e.message, true); }
     };
     el.appendChild(chip);
   }
+}
+
+function doCheckoutWithCommit(targetBranch) {
+  closeDialog();
+  const author = getChef().author;
+  openDialog('存档 (commit)', '描述这次改了什么', val => {
+    const repo = getChef().repo;
+    repo.commit('', val, getChef().workingRecipe, author);
+    repo.checkout(targetBranch);
+    resetWorkingRecipe();
+    render();
+    toast(`已存档并切换到 ${targetBranch}`);
+  });
+}
+
+function doCheckoutDiscard(targetBranch) {
+  closeDialog();
+  const repo = getChef().repo;
+  repo.checkout(targetBranch);
+  resetWorkingRecipe();
+  render();
+  toast(`已丢弃修改，切换到 ${targetBranch}`);
 }
 
 function renderLeftPanel() {
@@ -2972,6 +3006,85 @@ function renderSandwichView() {
       el.style.transform = '';
     }
   });
+  // GSAP hover animations (ensure gsap is loaded)
+  if (typeof gsap !== 'undefined') {
+    initSandwichHoverEffects();
+  }
+}
+
+function initSandwichHoverEffects() {
+  const panel = document.getElementById('leftPanel');
+  const sandwichView = document.getElementById('sandwichView');
+  const addBtn = sandwichView ? sandwichView.querySelector('.add-layer-btn') : null;
+  const layers = sandwichView ? sandwichView.querySelectorAll('.sandwich-layer') : [];
+
+  if (!panel || !addBtn) return;
+
+  // Clean up previous hover listeners
+  if (panel._gsapCleanup) panel._gsapCleanup();
+
+  let addBtnTween = null;
+
+  const onPanelEnter = () => {
+    if (addBtnTween) addBtnTween.kill();
+    addBtnTween = gsap.to(addBtn, {
+      opacity: 1,
+      scale: 1,
+      height: 40,
+      marginTop: 24,
+      marginBottom: -12,
+      duration: 0.4,
+      ease: 'back.out(1.7)'
+    });
+  };
+
+  const onPanelLeave = () => {
+    if (addBtnTween) addBtnTween.kill();
+    addBtnTween = gsap.to(addBtn, {
+      opacity: 0,
+      scale: 0.6,
+      height: 0,
+      marginTop: 0,
+      marginBottom: 0,
+      duration: 0.25,
+      ease: 'power2.in'
+    });
+  };
+
+  panel.addEventListener('mouseenter', onPanelEnter);
+  panel.addEventListener('mouseleave', onPanelLeave);
+
+  // Layer hover: expand spacing with spring-like feel
+  layers.forEach((layer) => {
+    const onLayerEnter = () => {
+      gsap.to(layer, {
+        paddingTop: 10,
+        paddingBottom: 10,
+        duration: 0.35,
+        ease: 'back.out(2)',
+        overwrite: 'auto'
+      });
+    };
+
+    const onLayerLeave = () => {
+      gsap.to(layer, {
+        paddingTop: 0,
+        paddingBottom: 0,
+        duration: 0.3,
+        ease: 'power2.out',
+        overwrite: 'auto'
+      });
+    };
+
+    layer.addEventListener('mouseenter', onLayerEnter);
+    layer.addEventListener('mouseleave', onLayerLeave);
+  });
+
+  // Cleanup reference
+  panel._gsapCleanup = () => {
+    panel.removeEventListener('mouseenter', onPanelEnter);
+    panel.removeEventListener('mouseleave', onPanelLeave);
+  };
 }
 
 function renderDiffSummary() {
@@ -3459,6 +3572,13 @@ function doPublish(type) {
 function showMergeDialog() {
   const repo = getChef().repo; const cur = repo.currentBranch();
   if (!cur) { toast('HEAD 未指向分支', true); return; }
+  // 检查暂存区是否有未存档的修改
+  const committed = getCommittedRecipe();
+  const { added, removed, modified } = diffSummary(committed, getChef().workingRecipe);
+  if (added > 0 || removed > 0 || modified > 0) {
+    toast('工作区有未存档的修改，请先存档再合并', true);
+    return;
+  }
   const others = [...repo.branches.keys()].filter(b => b !== cur);
   if (!others.length) { toast('没有其他分支可合并', true); return; }
   const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
@@ -3808,7 +3928,7 @@ function doMergePR(prId) {
       repo.checkout(targetBranch);
     }
     // 同步远端最新状态并拉取到本地（PR 合并后本地 main 应跟进）
-    sys.pull(repo, getChef().name);
+    sys.pull(repo, getChef().author);
     // 强制清理源分支（无论 prune 是否生效）
     repo.remoteRefs.delete('origin/' + sourceBranch);
     if (repo.branches.has(sourceBranch)) {
@@ -3852,14 +3972,14 @@ function showConflictResolver(prId) {
     conflictRows += `
       <div style="padding:4px 0;margin:6px 0;">
         <div style="font-size:0.7rem;color:var(--text-3);margin-bottom:4px;">第 ${c.index + 1} 层冲突：</div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <label style="flex:1;cursor:pointer;padding:6px;border:1.5px solid var(--border);display:flex;align-items:center;gap:4px;font-size:0.75rem;" id="conflict-${i}-ours">
+        <div style="display:flex;gap:8px;align-items:stretch;">
+          <label style="flex:1;cursor:pointer;padding:6px;border:1.5px solid var(--border);display:flex;flex-direction:column;gap:4px;font-size:0.75rem;" id="conflict-${i}-ours">
             <input type="radio" name="conflict-${i}" value="ours" onchange="highlightConflictChoice(${i})" checked>
-            <span style="font-weight:600;color:var(--accent);">${pr.target}:</span> ${oursImg}
+            <span style="white-space:nowrap;"><span style="font-weight:600;color:var(--accent);">${pr.target}:</span> ${oursImg}</span>
           </label>
-          <label style="flex:1;cursor:pointer;padding:6px;border:1.5px solid var(--border);display:flex;align-items:center;gap:4px;font-size:0.75rem;" id="conflict-${i}-theirs">
+          <label style="flex:1;cursor:pointer;padding:6px;border:1.5px solid var(--border);display:flex;flex-direction:column;gap:4px;font-size:0.75rem;" id="conflict-${i}-theirs">
             <input type="radio" name="conflict-${i}" value="theirs" onchange="highlightConflictChoice(${i})">
-            <span style="font-weight:600;color:var(--green);">${pr.source}:</span> ${theirsImg}
+            <span style="white-space:nowrap;"><span style="font-weight:600;color:var(--green);">${pr.source}:</span> ${theirsImg}</span>
           </label>
         </div>
       </div>`;
@@ -4013,7 +4133,21 @@ function doPush() {
 }
 
 function doFetch() {
-  try { const n = sys.fetch(getChef().repo); render(); toast(`远端发现 +${n} 个新存档`); }
+  try {
+    const repo = getChef().repo;
+    const curBranch = repo.currentBranch();
+    const n = sys.fetch(repo);
+    // 当前分支被远端删除时自动切到 main
+    if (curBranch && curBranch !== 'main' && !sys.remote.branches.has(curBranch)) {
+      repo.branches.delete(curBranch);
+      repo.checkout('main');
+      resetWorkingRecipe();
+      render();
+      toast(`远端已删除分支 ${curBranch}，已自动切回 main`);
+      return;
+    }
+    render(); toast(`远端发现 +${n} 个新存档`);
+  }
   catch(e) { toast(e.message, true); }
 }
 
