@@ -1553,7 +1553,8 @@ const INGREDIENTS = [
   { id: 'cheese', name: '芝士', img: 'img/cheese.webp' },
   { id: 'patty', name: '牛肉', img: 'img/patty.webp' },
   { id: 'lettuce', name: '生菜', img: 'img/lettuce.webp' },
-  { id: 'tomato', name: '西红柿', img: 'img/tomato.webp' }
+  { id: 'tomato', name: '西红柿', img: 'img/tomato.webp' },
+  { id: 'bacon', name: '培根', img: 'img/bacon.png' }
 ];
 
 // AI 帮厨可能产出的坏食材（AI 幻觉）
@@ -2968,6 +2969,7 @@ function renderSandwichView() {
     layer.title = getIngredientName(recipe[i]);
     layer.style.zIndex = recipe.length - i + 1;
     if (recipe[i] === 'tomato') layer.style.transform = 'scale(1.25)';
+    if (recipe[i] === 'bacon') layer.style.transform = 'scale(1.08)';
     const imgSrc = getIngredientImg(recipe[i]);
     layer.innerHTML = `
       <img class="sprite-img" src="${imgSrc}" alt="${getIngredientName(recipe[i])}">
