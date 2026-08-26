@@ -172,6 +172,81 @@ mark.sketch-mark {
 .capsule-btn.no-border:hover { background: oklch(0.92 0.02 80); }
 .capsule-btn:active { transform: scale(0.96); }
 
+/* Progressive task guide */
+.action-area {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.task-guide {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1.2fr) minmax(220px, 0.8fr);
+  min-width: 0;
+  min-height: 64px;
+  background: #fbf8f3;
+  border: 1px solid #ded4c6;
+}
+.task-guide-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: var(--text);
+  color: white;
+  font-weight: 700;
+}
+.task-guide-progress span:first-child {
+  font-size: 1rem;
+  line-height: 1;
+}
+.task-guide-progress span:last-child {
+  font-size: 0.58rem;
+  font-weight: 500;
+  opacity: 0.72;
+  letter-spacing: 0.04em;
+}
+.task-guide-main,
+.task-guide-next {
+  min-width: 0;
+  padding: 9px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+}
+.task-guide-next {
+  border-left: 1px solid #ded4c6;
+  background: white;
+}
+.task-guide-label {
+  color: var(--accent);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.task-guide-title {
+  color: var(--text);
+  font-size: 0.86rem;
+  line-height: 1.25;
+}
+.task-guide-why,
+.task-guide-next-copy {
+  color: var(--text-2);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+.task-guide-why strong {
+  color: var(--text-2);
+  font-size: 0.62rem;
+  margin-right: 5px;
+}
+.task-guide-lock-hint {
+  color: var(--text-3);
+  font-size: 0.58rem;
+}
+
 /* Action bar */
 .action-bar {
   display: flex;
@@ -243,6 +318,24 @@ mark.sketch-mark {
   font-size: 0.65rem;
   font-weight: 400;
   opacity: 0.7;
+}
+.action-bar .btn.is-locked,
+.action-bar .btn.is-locked:hover,
+.action-bar .btn.is-locked:active {
+  background: #f2f0ec;
+  color: var(--text-3);
+  border-color: #d6d2ca;
+  cursor: not-allowed;
+  opacity: 0.72;
+  transform: none;
+  box-shadow: none;
+}
+.action-bar .btn.is-recommended {
+  box-shadow: inset 0 -4px 0 #d4940e;
+  transform: translateY(-1px);
+}
+.action-bar .btn.is-recommended:hover {
+  box-shadow: inset 0 -4px 0 #d4940e;
 }
 
 /* 768px rules moved to bottom responsive section */
@@ -1169,6 +1262,14 @@ mark.sketch-mark {
     gap: 12px;
   }
 
+  .task-guide {
+    grid-template-columns: 56px minmax(0, 1.15fr) minmax(170px, 0.85fr);
+  }
+  .task-guide-main,
+  .task-guide-next {
+    padding: 8px 9px;
+  }
+
   .main-layout {
     flex-direction: row;
     padding: 10px;
@@ -1225,6 +1326,27 @@ mark.sketch-mark {
     padding: 12px 8px;
     gap: 10px;
   }
+
+  .action-area { gap: 8px; }
+  .task-guide {
+    grid-template-columns: 50px minmax(0, 1fr);
+  }
+  .task-guide-progress {
+    grid-row: 1 / 3;
+  }
+  .task-guide-main {
+    padding: 7px 9px 6px;
+  }
+  .task-guide-next {
+    grid-column: 2;
+    padding: 6px 9px 7px;
+    border-left: 0;
+    border-top: 1px solid #ded4c6;
+  }
+  .task-guide-title { font-size: 0.78rem; }
+  .task-guide-why,
+  .task-guide-next-copy { font-size: 0.64rem; }
+  .task-guide-lock-hint { display: none; }
 
   .header h1 {
     font-size: 0.95rem;
@@ -1481,14 +1603,30 @@ mark.sketch-mark {
   </div>
 </div>
 
-<div class="action-bar">
-  <button class="btn" onclick="doCommit()"><span class="btn-zh">存档</span><span class="btn-en">commit</span></button>
-  <button class="btn" onclick="doRevert()"><span class="btn-zh">回退</span><span class="btn-en">revert</span></button>
-  <button class="btn" onclick="showBranchDialog(true)"><span class="btn-zh">开分支</span><span class="btn-en">branch</span></button>
-  <button class="btn" onclick="showMergeDialog()"><span class="btn-zh">合并</span><span class="btn-en">merge</span></button>
-  <button class="btn sync-btn" id="syncBtn" onclick="doSync()"><span class="btn-zh" id="syncZh">同步</span><span class="btn-en" id="syncEn">sync</span></button>
-  <button class="btn pr-btn" onclick="showPRDialog()"><span class="btn-zh">PR</span><span class="btn-en">pull request</span><span class="pr-badge" id="prBadge" style="display:none;"></span></button>
-  <button class="btn publish-btn" onclick="showPublishDialog()"><span class="btn-zh">发布</span><span class="btn-en">deploy</span></button>
+<div class="action-area">
+  <div class="task-guide" id="taskGuide" aria-live="polite">
+    <div class="task-guide-progress"><span id="taskGuideProgress">1/7</span><span>LEARNING</span></div>
+    <div class="task-guide-main">
+      <span class="task-guide-label">当前任务</span>
+      <strong class="task-guide-title" id="taskGuideTitle">克隆仓库</strong>
+      <span class="task-guide-why"><strong>为什么</strong><span id="taskGuideWhy">先把远端项目带回本地，才能开始修改</span></span>
+    </div>
+    <div class="task-guide-next">
+      <span class="task-guide-label">下一步</span>
+      <span class="task-guide-next-copy" id="taskGuideNext">在右侧点击「克隆仓库」</span>
+      <span class="task-guide-lock-hint">灰色按钮可点击查看暂不可用原因</span>
+    </div>
+  </div>
+
+  <div class="action-bar" id="actionBar">
+    <button class="btn" data-action="commit" onclick="doCommit()"><span class="btn-zh">存档</span><span class="btn-en">commit</span></button>
+    <button class="btn" data-action="revert" onclick="doRevert()"><span class="btn-zh">回退</span><span class="btn-en">revert</span></button>
+    <button class="btn" data-action="branch" onclick="showBranchDialog(true)"><span class="btn-zh">开分支</span><span class="btn-en">branch</span></button>
+    <button class="btn" data-action="merge" onclick="showMergeDialog()"><span class="btn-zh">合并</span><span class="btn-en">merge</span></button>
+    <button class="btn sync-btn" data-action="sync" id="syncBtn" onclick="doSync()"><span class="btn-zh" id="syncZh">同步</span><span class="btn-en" id="syncEn">sync</span></button>
+    <button class="btn pr-btn" data-action="pr" onclick="showPRDialog()"><span class="btn-zh">PR</span><span class="btn-en">pull request</span><span class="pr-badge" id="prBadge" style="display:none;"></span></button>
+    <button class="btn publish-btn" data-action="publish" onclick="showPublishDialog()"><span class="btn-zh">发布</span><span class="btn-en">deploy</span></button>
+  </div>
 </div>
 </div>
 
@@ -1553,7 +1691,8 @@ const INGREDIENTS = [
   { id: 'cheese', name: '芝士', img: 'img/cheese.webp' },
   { id: 'patty', name: '牛肉', img: 'img/patty.webp' },
   { id: 'lettuce', name: '生菜', img: 'img/lettuce.webp' },
-  { id: 'tomato', name: '西红柿', img: 'img/tomato.webp' }
+  { id: 'tomato', name: '西红柿', img: 'img/tomato.webp' },
+  { id: 'bacon', name: '培根', img: 'img/bacon.webp' }
 ];
 
 // AI 帮厨可能产出的坏食材（AI 幻觉）
@@ -2784,6 +2923,273 @@ function getChef() {
   };
 }
 
+// The guide is derived from live repository state. It intentionally does not
+// reuse achievements, because achievements persist while this simulator resets.
+const TASK_GUIDE_COPY = [
+  { id: 'clone', step: '1/7', title: '克隆仓库', why: '先把远端项目带回本地，才能开始修改', next: '在右侧点击「克隆仓库」', action: null },
+  { id: 'add', step: '2/7', title: '给汉堡增加食材', why: '先产生一处真实修改，才能理解工作区', next: '移入工作区，点击「+」，试试培根', action: null },
+  { id: 'commit', step: '3/7', title: '存档当前修改', why: '存档会把工作区变化保存成一个可追踪版本', next: '点击「存档 commit」并描述这次修改', action: 'commit' },
+  { id: 'sync', step: '4/7', title: '同步当前分支', why: '把本地存档送到远端，队友才能看到', next: '点击「同步 sync」', action: 'sync' },
+  { id: 'branch', step: '5/7', title: '开一个功能分支', why: '把下一次尝试和 main 隔离，协作更安全', next: '点击「开分支 branch」', action: 'branch' },
+  { id: 'branch-edit', step: '5/7', title: '在功能分支修改汉堡', why: '空分支还没有值得合并或评审的内容', next: '添加或替换一层食材，再存档并同步', action: null },
+  { id: 'pr', step: '6/7', title: '创建 Pull Request', why: '让队友审核后再把功能分支放进 main', next: '点击「PR」创建请求；也可用「合并」体验本地整合', action: 'pr' },
+  { id: 'pr-review', step: '6/7', title: '请队友审核 PR', why: 'PR 作者不能审核自己，需要另一位厨师确认', next: '切换厨师视角，打开 PR 并 Approve', action: 'pr' },
+  { id: 'pr-merge', step: '6/7', title: '合并已通过的 PR', why: '评审已通过，现在可以安全进入 main', next: '打开 PR，点击「Merge PR」', action: 'pr' },
+  { id: 'publish', step: '7/7', title: '发布 main 最新版本', why: '远端 main 已准备好一个可发布版本', next: '先试吃发布，确认后再全店供应', action: 'publish' },
+  { id: 'complete', step: '7/7', title: '本轮任务已完成', why: '本地、远端和门店已经对齐', next: '可以开新分支，继续尝试另一种配方', action: 'branch' },
+  { id: 'conflict', step: '4/7', title: '解决同步冲突', why: '冲突未处理前，Git 无法继续同步', next: '在冲突弹窗中选择要保留的配方', action: null },
+  { id: 'switch-main', step: '6/7', title: '切回 main', why: '当前功能分支已合并，远端也已删除它', next: '点击分支标签切回 main，避免重新推送旧分支', action: null }
+];
+
+function taskGuideCopy(id, overrides) {
+  const base = TASK_GUIDE_COPY.find(item => item.id === id) || TASK_GUIDE_COPY[0];
+  return { ...base, ...(overrides || {}) };
+}
+
+function countFirstParentCommits(repo, tip) {
+  let count = 0;
+  let commitId = tip;
+  const visited = new Set();
+  while (commitId && !visited.has(commitId)) {
+    visited.add(commitId);
+    const commit = repo.commits.get(commitId);
+    if (!commit) break;
+    if (commit.parents.length > 0) count++;
+    commitId = commit.parents[0];
+  }
+  return count;
+}
+
+function getTaskGuideContext() {
+  const chef = getChef();
+  const repo = chef.repo;
+  const initialized = chef.initialized;
+  if (!initialized) {
+    return { initialized, repo, dirty: false, userCommitCount: 0, openPRs: [], allPRs: [] };
+  }
+
+  const currentBranch = repo.currentBranch();
+  const currentTip = currentBranch ? repo.branches.get(currentBranch) : null;
+  const mainTip = repo.branches.get('main');
+  const remoteCurrentTip = currentBranch ? sys.remote.branches.get(currentBranch) : null;
+  const remoteMainTip = sys.remote.branches.get('main');
+  const remoteMainCommit = remoteMainTip ? sys.remote.commits.get(remoteMainTip) : null;
+  const dirty = diffRecipes(getCommittedRecipe(), chef.workingRecipe).some(change => change.type !== 'same');
+  const userCommitCount = repo.getHistory().filter(commit => commit.parents.length > 0).length;
+  const openPRs = sys.getOpenPRs();
+  const allPRs = sys.getAllPRs();
+  const staleMergedBranch = Boolean(
+    currentBranch && currentBranch !== 'main' && !remoteCurrentTip &&
+    allPRs.some(pr => pr.status === 'merged' && pr.source === currentBranch)
+  );
+  const emptyFeatureBranch = Boolean(
+    currentBranch && currentBranch !== 'main' && !remoteCurrentTip && currentTip === mainTip
+  );
+  const rawAhead = currentBranch ? sys.getAhead(repo) : 0;
+  const meaningfulAhead = emptyFeatureBranch ? 0 : rawAhead;
+  const behind = currentBranch ? sys.getBehind(repo) : 0;
+  const validMergeTargets = currentBranch && currentTip
+    ? [...repo.branches.entries()].filter(([name, targetTip]) => (
+        name !== currentBranch && targetTip && !repo._isAnc(currentTip, targetTip)
+      )).map(([name]) => name)
+    : [];
+  const canCreatePR = Boolean(
+    !dirty && currentBranch && currentBranch !== 'main' && remoteCurrentTip &&
+    remoteMainTip && remoteCurrentTip !== remoteMainTip &&
+    !openPRs.some(pr => pr.source === currentBranch && pr.target === 'main')
+  );
+  const remoteMainHasRelease = Boolean(remoteMainCommit && remoteMainCommit.parents.length > 0);
+  const remoteMainUserCommitCount = countFirstParentCommits(sys.remote, remoteMainTip);
+  const publishedCurrent = Boolean(
+    remoteMainTip && publishState.production === remoteMainTip && !publishState.canary
+  );
+  const canaryCurrent = Boolean(remoteMainTip && publishState.canary === remoteMainTip);
+
+  return {
+    initialized,
+    repo,
+    currentBranch,
+    currentTip,
+    mainTip,
+    remoteCurrentTip,
+    remoteMainTip,
+    dirty,
+    userCommitCount,
+    meaningfulAhead,
+    behind,
+    validMergeTargets,
+    openPRs,
+    allPRs,
+    canCreatePR,
+    remoteMainHasRelease,
+    remoteMainUserCommitCount,
+    publishedCurrent,
+    canaryCurrent,
+    staleMergedBranch,
+    emptyFeatureBranch
+  };
+}
+
+function getTaskGuideState(context) {
+  if (pendingConflictInfo) return taskGuideCopy('conflict');
+  if (!context.initialized) return taskGuideCopy('clone');
+  if (context.staleMergedBranch) return taskGuideCopy('switch-main');
+  if (context.dirty) return taskGuideCopy('commit');
+  if (context.userCommitCount === 0) return taskGuideCopy('add');
+
+  const approvedPR = context.openPRs.find(pr => pr.reviews.some(review => review.status === 'approved'));
+  if (approvedPR) {
+    return taskGuideCopy('pr-merge', {
+      title: `合并已通过的 PR #${approvedPR.id}`,
+      next: `打开 PR #${approvedPR.id}，点击「Merge PR」`
+    });
+  }
+
+  const reviewablePR = context.openPRs.find(pr => pr.author !== getChef().author);
+  if (reviewablePR) {
+    return taskGuideCopy('pr-review', {
+      title: `审核 PR #${reviewablePR.id}`,
+      why: `${reviewablePR.author} 正在等待另一位厨师确认`,
+      next: `打开 PR #${reviewablePR.id}，点击「Approve」`
+    });
+  }
+
+  const myOpenPR = context.openPRs.find(pr => pr.author === getChef().author);
+  if (myOpenPR) {
+    return taskGuideCopy('pr-review', {
+      title: `请队友审核 PR #${myOpenPR.id}`,
+      next: '切换厨师视角；若尚未克隆，先完成克隆'
+    });
+  }
+
+  if (context.emptyFeatureBranch) return taskGuideCopy('branch-edit');
+  if (context.behind > 0 || context.meaningfulAhead > 0) {
+    const direction = [
+      context.behind > 0 ? `远端多 ${context.behind} 个存档` : '',
+      context.meaningfulAhead > 0 ? `本地多 ${context.meaningfulAhead} 个存档` : ''
+    ].filter(Boolean).join('，');
+    return taskGuideCopy('sync', { why: `${direction}，需要先对齐` });
+  }
+  if (context.canCreatePR) return taskGuideCopy('pr');
+
+  if (context.publishedCurrent) return taskGuideCopy('complete');
+  if (context.canaryCurrent) {
+    return taskGuideCopy('publish', {
+      title: '完成试吃并决定是否全量',
+      why: '最新版本正在小流量试吃，还未正式供应',
+      next: '点击「发布」，选择全店供应或回滚'
+    });
+  }
+
+  const hasIntegratedFeature = context.remoteMainUserCommitCount >= 2 ||
+    context.allPRs.some(pr => pr.status === 'merged');
+  if (context.remoteMainHasRelease && hasIntegratedFeature) return taskGuideCopy('publish');
+
+  if (context.currentBranch && context.currentBranch !== 'main') {
+    return taskGuideCopy('branch-edit', {
+      title: `继续完善 ${context.currentBranch}`,
+      next: '修改汉堡并存档；有独立内容后再同步'
+    });
+  }
+
+  const featureBranch = [...context.repo.branches.keys()].find(name => name !== 'main');
+  if (featureBranch) {
+    return taskGuideCopy('branch-edit', {
+      title: `切回 ${featureBranch} 继续`,
+      why: '功能分支还在，先完成它再合并或发起 PR',
+      next: `点击分支标签「${featureBranch}」`
+    });
+  }
+  return taskGuideCopy('branch');
+}
+
+function getActionAvailability(context) {
+  const lockedBeforeClone = reason => ({ enabled: false, reason: reason || '先完成「克隆仓库」' });
+  if (!context.initialized) {
+    return {
+      commit: lockedBeforeClone(), revert: lockedBeforeClone(), branch: lockedBeforeClone(),
+      merge: lockedBeforeClone(), sync: lockedBeforeClone(), pr: lockedBeforeClone(), publish: lockedBeforeClone()
+    };
+  }
+
+  const clean = !context.dirty;
+  return {
+    commit: context.dirty
+      ? { enabled: true, reason: '' }
+      : { enabled: false, reason: '先修改汉堡，产生一处未存档变化' },
+    revert: !clean
+      ? { enabled: false, reason: '先存档或丢弃工作区修改' }
+      : context.userCommitCount > 0
+        ? { enabled: true, reason: '' }
+        : { enabled: false, reason: '暂无可撤销的存档' },
+    branch: !clean
+      ? { enabled: false, reason: '先处理未存档修改' }
+      : context.userCommitCount > 0
+        ? { enabled: true, reason: '' }
+        : { enabled: false, reason: '先完成第一个存档' },
+    merge: !clean
+      ? { enabled: false, reason: '先存档修改，再进行合并' }
+      : context.validMergeTargets.length > 0
+        ? { enabled: true, reason: '' }
+        : { enabled: false, reason: context.repo.branches.size < 2 ? '至少需要两个分支' : '其他分支暂无可合入内容' },
+    sync: !clean
+      ? { enabled: false, reason: '先存档修改，再同步' }
+      : context.staleMergedBranch
+        ? { enabled: false, reason: '先切回 main，避免重新推送已合并分支' }
+        : context.behind > 0 || context.meaningfulAhead > 0
+          ? { enabled: true, reason: '' }
+          : { enabled: false, reason: '本地与远端已一致' },
+    pr: !clean
+      ? { enabled: false, reason: '先存档修改，再打开 PR' }
+      : context.allPRs.length > 0 || context.canCreatePR
+        ? { enabled: true, reason: '' }
+        : { enabled: false, reason: context.currentBranch === 'main' ? '请先在功能分支完成修改并同步' : context.emptyFeatureBranch ? '当前分支相对 main 还没有变更' : '先同步当前分支到远端' },
+    publish: !clean
+      ? { enabled: false, reason: '先处理未存档修改' }
+      : context.openPRs.length > 0
+        ? { enabled: false, reason: '先完成当前 PR' }
+        : !context.remoteMainHasRelease
+          ? { enabled: false, reason: '远端 main 暂无正式存档' }
+          : context.publishedCurrent
+            ? { enabled: false, reason: '远端 main 最新版本已经上线' }
+            : { enabled: true, reason: '' }
+  };
+}
+
+function refreshGuideAndActions() {
+  const guide = document.getElementById('taskGuide');
+  if (!guide) return;
+  const context = getTaskGuideContext();
+  const state = getTaskGuideState(context);
+  const availability = getActionAvailability(context);
+
+  guide.dataset.guideStep = state.id;
+  document.getElementById('taskGuideProgress').textContent = state.step;
+  document.getElementById('taskGuideTitle').textContent = state.title;
+  document.getElementById('taskGuideWhy').textContent = state.why;
+  document.getElementById('taskGuideNext').textContent = state.next;
+
+  for (const button of document.querySelectorAll('#actionBar [data-action]')) {
+    const action = button.dataset.action;
+    const status = availability[action] || { enabled: false, reason: '当前操作暂不可用' };
+    button.classList.toggle('is-locked', !status.enabled);
+    button.classList.toggle('is-recommended', status.enabled && state.action === action);
+    button.setAttribute('aria-disabled', status.enabled ? 'false' : 'true');
+    button.dataset.disabledReason = status.reason;
+    button.title = status.enabled ? (state.action === action ? '推荐的下一步' : '') : status.reason;
+  }
+}
+
+function explainLockedAction(event) {
+  const button = event.target.closest('[data-action]');
+  if (!button || !button.classList.contains('is-locked')) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  toast(button.dataset.disabledReason || '当前操作暂不可用', true);
+}
+
+document.getElementById('actionBar').addEventListener('click', explainLockedAction, true);
+
 function getCommittedRecipe() {
   if (!getChef().initialized) return [];
   return getChef().repo.getHeadRecipe();
@@ -2926,6 +3332,7 @@ function doCheckoutDiscard(targetBranch) {
 }
 
 function renderLeftPanel() {
+  refreshGuideAndActions();
   const repo = getChef().repo;
 
   if (!getChef().initialized) {
@@ -4158,8 +4565,8 @@ function doPull() {
     if (result.type === 'up-to-date') { render(); toast('已是最新'); return; }
     if (result.type === 'fast-forward') { resetWorkingRecipe(); render(); toast('已同步远端的新存档'); unlockAchievement('first_pull'); return; }
     if (result.type === 'auto-merge') { resetWorkingRecipe(); render(); toast('自动合并成功（改的是不同位置）'); unlockAchievement('first_pull'); return; }
-    render();
     pendingConflictInfo = result;
+    render();
     showConflictDialog(result);
     unlockAchievement('first_pull');
   } catch(e) { toast(e.message, true); }
