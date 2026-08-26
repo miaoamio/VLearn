@@ -4,7 +4,7 @@ export default function Page() {
       <iframe
         className="vlearn-frame"
         src="/app.html"
-        title="今天吃点什么？"
+        title="开始制作你的专属汉堡"
         allow="clipboard-read; clipboard-write"
       />
     </main>
