@@ -1,0 +1,23 @@
+{
+  "chart_type": "milestone",
+  "title": "Demo 2: 多人协作",
+  "milestones": [
+    { "id": "m1", "title": "同步推送", "desc": "git push" },
+    { "id": "m2", "title": "切换身份", "desc": "模拟协作者" },
+    { "id": "m3", "title": "同步更新", "desc": "git pull" },
+    { "id": "m4", "title": "PR 评审", "desc": "Pull Request" },
+    { "id": "m5", "title": "合并发布", "desc": "merge to main" },
+    { "id": "m6", "title": "回滚", "desc": "git revert" }
+  ],
+  "style_budget": {
+    "fill_colors": ["#f3eeff", "#edf9fa", "#edf7f2", "#f7f8fa", "#eef9f1"],
+    "border_colors": ["#a58bff", "#57d7d0", "#66e3a5", "#4fd88f", "#62e6a8"],
+    "text_colors": ["#1f2329", "#6b7280", "#14532d"],
+    "font_sizes": [14, 12, 24],
+    "connector_shape": "straight",
+    "connector_arrow_end": "none",
+    "connector_line_color": "#a58bff",
+    "root_border_color": "#a58bff",
+    "root_fill_color": "#ffffff"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "chart_type": "milestone",
+  "title": "Demo 1: 本地版本管理",
+  "milestones": [
+    { "id": "m1", "title": "克隆仓库", "desc": "git clone" },
+    { "id": "m2", "title": "提交变更", "desc": "git commit" },
+    { "id": "m3", "title": "触发报错", "desc": "冲突/错误" },
+    { "id": "m4", "title": "版本回退", "desc": "git reset" },
+    { "id": "m5", "title": "创建分支", "desc": "git branch" },
+    { "id": "m6", "title": "合并分支", "desc": "git merge" }
+  ],
+  "style_budget": {
+    "fill_colors": ["#edf7f2", "#edf9fa", "#f3eeff", "#f7f8fa", "#eef9f1"],
+    "border_colors": ["#66e3a5", "#57d7d0", "#a58bff", "#4fd88f", "#62e6a8"],
+    "text_colors": ["#1f2329", "#6b7280", "#14532d"],
+    "font_sizes": [14, 12, 24],
+    "connector_shape": "straight",
+    "connector_arrow_end": "none",
+    "connector_line_color": "#57d7d0",
+    "root_border_color": "#57d7d0",
+    "root_fill_color": "#ffffff"
+  }
+}

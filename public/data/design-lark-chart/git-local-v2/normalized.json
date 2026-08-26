@@ -1,0 +1,19 @@
+{
+  "nodes": [
+    { "id": "clone", "label": "克隆仓库", "detail": "git clone" },
+    { "id": "commit", "label": "提交变更", "detail": "git commit" },
+    { "id": "error", "label": "触发报错", "detail": "冲突/错误" },
+    { "id": "reset", "label": "版本回退", "detail": "git reset" },
+    { "id": "branch", "label": "创建分支", "detail": "git branch" },
+    { "id": "merge", "label": "合并分支", "detail": "git merge" }
+  ],
+  "edges": [
+    { "from": "clone", "to": "commit" },
+    { "from": "commit", "to": "error" },
+    { "from": "error", "to": "reset" },
+    { "from": "reset", "to": "branch" },
+    { "from": "branch", "to": "merge" }
+  ],
+  "annotations": [],
+  "groups": []
+}
