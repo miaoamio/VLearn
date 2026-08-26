@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Git 概念厨房</title>
+<title>今天吃点什么？</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M15 55h70v8c0 4-3 7-7 7H22c-4 0-7-3-7-7v-8z' fill='%23D2691E'/><rect x='20' y='50' width='60' height='5' rx='2' fill='%2332CD32'/><rect x='18' y='42' width='64' height='10' rx='3' fill='%23CD853F'/><path d='M15 45c0-18 15-30 35-30s35 12 35 30H15z' fill='%23F4A460'/><circle cx='35' cy='35' r='2' fill='%23FFF5E1'/><circle cx='55' cy='30' r='2' fill='%23FFF5E1'/><circle cx='70' cy='38' r='2' fill='%23FFF5E1'/></svg>">
 <style>
 @font-face {
@@ -433,7 +433,6 @@ mark.sketch-mark {
   border: none;
   border-radius: 5px;
   font-size: 0.78rem;
-  transition: box-shadow 0.12s;
   flex-shrink: 0;
   width: 100%;
   overflow: visible;
@@ -445,7 +444,6 @@ mark.sketch-mark {
     drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff)
     drop-shadow(1px 1px 0 #fff) drop-shadow(-1px 1px 0 #fff)
     drop-shadow(1px -1px 0 #fff) drop-shadow(-1px -1px 0 #fff);
-  transition: filter 0.15s;
 }
 .sandwich-layer .layer-emoji { font-size: 1.1rem; }
 .sandwich-layer .layer-name { display: none; }
@@ -497,17 +495,17 @@ mark.sketch-mark {
   font-size: 0;
   color: var(--text);
   cursor: pointer;
-  transition: box-shadow 0.15s, transform 0.12s;
   flex-shrink: 0;
   position: relative;
   z-index: 10;
+  opacity: 0;
+  transform: scale(0.6);
 }
 .add-layer-btn img {
   width: 24px;
   height: 24px;
   display: block;
 }
-.add-layer-btn:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.13); transform: scale(1.05); }
 .add-layer-btn:active { transform: scale(0.95); }
 
 .add-layer-row {
@@ -1473,7 +1471,7 @@ mark.sketch-mark {
 
 <div class="top-container">
 <div class="header">
-  <h1><span style="font-family: var(--font-hand); font-weight: 900; font-size: 26px; margin-right: 2px; color: var(--text);">Git</span> 概念厨房</h1>
+  <h1>今天吃点什么？</h1>
   <div class="header-right">
     <button class="capsule-btn no-border" onclick="showStoreDialog()"><img src="img/shop.webp" style="width:16px;height:18px;object-fit:contain;" alt="">门店</button>
     <button class="capsule-btn" onclick="showAchievementPanel()"><img src="img/honor.webp" style="width:16px;height:18px;object-fit:contain;" alt="">成就 <span class="achievement-progress" id="achProgress"></span></button>
@@ -1542,6 +1540,7 @@ mark.sketch-mark {
 <div class="toast" id="toast"></div>
 <div class="ingredient-selector" id="ingredientSelector"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <script>
 // ================================================================
 // ANALYTICS — 只统计 PV / UV
@@ -1906,7 +1905,7 @@ class Repo {
     return 'merge';
   }
 
-  merge(target) {
+  merge(target, author) {
     if (!this.branches.has(target)) throw new Error(`分支 "${target}" 不存在`);
     const cur = this.currentBranch();
     if (!cur) throw new Error('HEAD 未指向分支');
@@ -1930,17 +1929,17 @@ class Repo {
     }
 
     const id = this._id();
-    this.commits.set(id, { id, msg: '合并', parents: [curId, targetId], recipe: mergedRecipe, author: '小蓝' });
+    this.commits.set(id, { id, msg: `合并 ${target} → ${cur}`, parents: [curId, targetId], recipe: mergedRecipe, author: author || '小蓝' });
     this.branches.set(cur, id);
     return { id, type: 'merge' };
   }
 
-  mergeWithRecipe(target, recipe) {
+  mergeWithRecipe(target, recipe, author) {
     const cur = this.currentBranch();
     const curId = this.branches.get(cur);
     const targetId = this.branches.get(target);
     const id = this._id();
-    this.commits.set(id, { id, msg: '合并', parents: [curId, targetId], recipe: [...recipe], author: '小蓝' });
+    this.commits.set(id, { id, msg: `合并 ${target} → ${cur}`, parents: [curId, targetId], recipe: [...recipe], author: author || '小蓝' });
     this.branches.set(cur, id);
     return { id, type: 'merge' };
   }
@@ -2173,6 +2172,11 @@ class GitSystem {
       if (!this.remote.branches.has(branchName)) {
         toDelete.push({ refName, branchName });
       }
+    }
+    // 如果当前所在分支已被远端删除（如 PR 合并后源分支被删），自动切回 main
+    const curBranch = repo.currentBranch();
+    if (curBranch && toDelete.some(d => d.branchName === curBranch) && repo.branches.has('main')) {
+      repo.checkout('main');
     }
     for (const { refName, branchName } of toDelete) {
       repo.remoteRefs.delete(refName);
@@ -2890,7 +2894,12 @@ function switchChef(chef) {
   });
   // 切换视角时自动 fetch：模拟「这位厨师回到厨房看看远端有什么新内容」
   if (getChef().initialized) {
+    const branchBefore = getChef().repo.currentBranch();
     sys.fetch(getChef().repo);
+    // 如果 fetch 因远端分支被删除而自动切到了 main，重置工作区
+    if (getChef().repo.currentBranch() !== branchBefore) {
+      resetWorkingRecipe();
+    }
   }
   render();
   if (chef === 'red') unlockAchievement('switch_red');
@@ -2949,16 +2958,16 @@ function renderChips() {
     chip.textContent = name;
     chip.onclick = () => {
       if (name === repo.currentBranch()) return;
+      const oldHeadRecipe = repo.getHeadRecipe();
+      const isClean = JSON.stringify(getChef().workingRecipe) === JSON.stringify(oldHeadRecipe);
+      if (!isClean) {
+        // 有未存档修改：弹出选择对话框
+        showSwitchBranchDirtyDialog(name);
+        return;
+      }
       try {
-        // 判断当前是否有未提交修改
-        const oldHeadRecipe = repo.getHeadRecipe();
-        const isClean = JSON.stringify(getChef().workingRecipe) === JSON.stringify(oldHeadRecipe);
         repo.checkout(name);
-        if (isClean) {
-          // 无未提交修改：工作区切换为目标分支的已提交状态（真实 Git 行为）
-          resetWorkingRecipe();
-        }
-        // 有未提交修改：保留工作区（模拟 Git 的 carry-over 行为）
+        resetWorkingRecipe();
         render();
         toast(`checkout → ${name}`);
       } catch(e) { toast(e.message, true); }
@@ -3048,6 +3057,78 @@ function renderSandwichView() {
       el.style.transform = '';
     }
   });
+
+  // GSAP hover animations
+  initSandwichHoverEffects();
+}
+
+function initSandwichHoverEffects() {
+  const panel = document.getElementById('leftPanel');
+  const sandwichView = document.getElementById('sandwichView');
+  const addBtn = sandwichView ? sandwichView.querySelector('.add-layer-btn') : null;
+  const layers = sandwichView ? sandwichView.querySelectorAll('.sandwich-layer') : [];
+
+  if (!panel || !addBtn) return;
+
+  // Clean up previous hover listeners
+  if (panel._gsapCleanup) panel._gsapCleanup();
+
+  let addBtnTween = null;
+
+  const onPanelEnter = () => {
+    if (addBtnTween) addBtnTween.kill();
+    addBtnTween = gsap.to(addBtn, {
+      opacity: 1,
+      scale: 1,
+      duration: 0.4,
+      ease: 'back.out(1.7)'
+    });
+  };
+
+  const onPanelLeave = () => {
+    if (addBtnTween) addBtnTween.kill();
+    addBtnTween = gsap.to(addBtn, {
+      opacity: 0,
+      scale: 0.6,
+      duration: 0.25,
+      ease: 'power2.in'
+    });
+  };
+
+  panel.addEventListener('mouseenter', onPanelEnter);
+  panel.addEventListener('mouseleave', onPanelLeave);
+
+  // Layer hover: expand spacing with spring-like feel
+  layers.forEach((layer) => {
+    const onLayerEnter = () => {
+      gsap.to(layer, {
+        paddingTop: 10,
+        paddingBottom: 10,
+        duration: 0.35,
+        ease: 'back.out(2)',
+        overwrite: 'auto'
+      });
+    };
+
+    const onLayerLeave = () => {
+      gsap.to(layer, {
+        paddingTop: 0,
+        paddingBottom: 0,
+        duration: 0.3,
+        ease: 'power2.out',
+        overwrite: 'auto'
+      });
+    };
+
+    layer.addEventListener('mouseenter', onLayerEnter);
+    layer.addEventListener('mouseleave', onLayerLeave);
+  });
+
+  // Cleanup reference
+  panel._gsapCleanup = () => {
+    panel.removeEventListener('mouseenter', onPanelEnter);
+    panel.removeEventListener('mouseleave', onPanelLeave);
+  };
 }
 
 function renderDiffSummary() {
@@ -3393,6 +3474,60 @@ function showBranchDialog(andCheckout) {
   });
 }
 
+function showSwitchBranchDirtyDialog(targetBranch) {
+  const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
+  dl.innerHTML = `
+    <h3>工作区有未存档的修改</h3>
+    <p style="font-size:0.78rem;color:var(--text-3);margin:0 0 0.6rem;">
+      你在当前分支上改了配方但还没存档。切换分支前需要先处理这些修改：
+    </p>
+    <input id="switchCommitMsg" class="dialog-input" placeholder="描述这次改了什么（存档时填写）" autofocus />
+    <div id="switchDlgError" style="display:none;color:#c0392b;font-size:0.75rem;margin-top:4px;"></div>
+    <div class="dialog-btns" style="margin-top:0.8rem;">
+      <button class="btn" onclick="closeDialog()">取消</button>
+      <button class="btn danger" onclick="discardAndSwitch('${targetBranch}')">丢弃修改并切换</button>
+      <button class="btn dark" onclick="commitAndSwitch('${targetBranch}')">存档后切换</button>
+    </div>`;
+  ov.classList.add('show');
+  setTimeout(() => {
+    const input = document.getElementById('switchCommitMsg');
+    if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') commitAndSwitch(targetBranch); });
+  }, 50);
+}
+
+function discardAndSwitch(targetBranch) {
+  const repo = getChef().repo;
+  try {
+    repo.checkout(targetBranch);
+    resetWorkingRecipe();
+    closeDialog();
+    render();
+    toast(`已丢弃修改，checkout → ${targetBranch}`);
+  } catch(e) { toast(e.message, true); }
+}
+
+function commitAndSwitch(targetBranch) {
+  const repo = getChef().repo;
+  const input = document.getElementById('switchCommitMsg');
+  const errEl = document.getElementById('switchDlgError');
+  const msg = input ? input.value.trim() : '';
+  if (!msg) {
+    if (errEl) { errEl.textContent = '请输入存档信息'; errEl.style.display = 'block'; }
+    return;
+  }
+  try {
+    const author = getChef().author;
+    repo.commit('', msg, getChef().workingRecipe, author);
+    resetWorkingRecipe();
+    repo.checkout(targetBranch);
+    resetWorkingRecipe();
+    closeDialog();
+    render();
+    toast(`已存档，checkout → ${targetBranch}`);
+    unlockAchievement('first_commit');
+  } catch(e) { toast(e.message, true); }
+}
+
 function showDeleteBranchDialog() {
   const repo = getChef().repo;
   const cur = repo.currentBranch();
@@ -3535,10 +3670,19 @@ function doPublish(type) {
 function showMergeDialog() {
   const repo = getChef().repo; const cur = repo.currentBranch();
   if (!cur) { toast('HEAD 未指向分支', true); return; }
+
+  // 检查工作区是否干净
+  const headRecipe = repo.getHeadRecipe();
+  const isClean = JSON.stringify(getChef().workingRecipe) === JSON.stringify(headRecipe);
+  if (!isClean) {
+    toast('请先存档或丢弃工作区的修改，再进行合并', true);
+    return;
+  }
+
   const others = [...repo.branches.keys()].filter(b => b !== cur);
   if (!others.length) { toast('没有其他分支可合并', true); return; }
   const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
-  dl.innerHTML = `<h3>合并：将 ${cur} 合入目标分支</h3><p style="color:var(--text-3);font-size:12px;margin:0 0 0.6rem">选择要合入的目标分支：</p><div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-bottom:0.8rem">${others.map(b => `<button class="btn" onclick="doMerge('${b}')" style="position:relative">${cur} → ${b}</button>`).join('')}</div><div class="dialog-btns"><button class="btn" onclick="closeDialog()">取消</button></div>`;
+  dl.innerHTML = `<h3>将 ${cur} 合入到…</h3><p style="color:var(--text-3);font-size:12px;margin:0 0 0.6rem">当前分支 <b>${cur}</b> 的改动将合入你选择的目标分支：</p><div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-bottom:0.8rem">${others.map(b => `<button class="btn" onclick="doMerge('${b}')" style="position:relative">${cur} → ${b}</button>`).join('')}</div><div class="dialog-btns"><button class="btn" onclick="closeDialog()">取消</button></div>`;
   ov.classList.add('show');
 }
 
@@ -3546,26 +3690,19 @@ function doMerge(targetBranch) {
   const repo = getChef().repo;
   const sourceBranch = repo.currentBranch();
   try {
-    // 切到目标分支，将源分支合入
+    // 切到目标分支，将源分支合入（与 git checkout target && git merge source 一致）
     repo.checkout(targetBranch);
-    const result = repo.merge(sourceBranch);
+    const result = repo.merge(sourceBranch, getChef().author);
     if (result.type === 'recipe-conflict') {
       closeDialog();
       render();
       showMergeRecipeConflictDialog(sourceBranch, result);
       return;
     }
-    // 合并成功后删除源分支（已被合入，不再需要）
-    repo.branches.delete(sourceBranch);
-    repo.remoteRefs.delete('origin/' + sourceBranch);
-    // 同步删除远端分支，防止 fetch 时重新创建
-    if (sys.remote.branches.has(sourceBranch)) {
-      sys.remote.branches.delete(sourceBranch);
-    }
     closeDialog();
     resetWorkingRecipe();
     render();
-    toast(result.type === 'fast-forward' ? `合并成功（fast-forward）：${sourceBranch} → ${targetBranch}` : `合并成功：${sourceBranch} → ${targetBranch}`);
+    toast(result.type === 'fast-forward' ? `合并成功（快进）：${sourceBranch} → ${targetBranch}` : `合并成功：${sourceBranch} → ${targetBranch}`);
     unlockAchievement('first_merge');
   } catch(e) {
     // 出错时切回原分支
@@ -3576,13 +3713,13 @@ function doMerge(targetBranch) {
   }
 }
 
-function showMergeRecipeConflictDialog(targetBranch, conflictResult) {
+function showMergeRecipeConflictDialog(sourceBranch, conflictResult) {
   const ov = document.getElementById('dialogOverlay'), dl = document.getElementById('dialog');
   const { curRecipe, targetRecipe, conflicts } = conflictResult;
   const repo = getChef().repo;
   const cur = repo.currentBranch();
 
-  window._mergeConflictTarget = targetBranch;
+  window._mergeConflictSource = sourceBranch;
   window._mergeConflictInfo = conflictResult;
 
   const conflictIndices = new Set(conflicts.map(c => c.index));
@@ -3601,27 +3738,27 @@ function showMergeRecipeConflictDialog(targetBranch, conflictResult) {
 
   dl.innerHTML = `
     <h3>配方冲突!</h3>
-    <p>合并 <b>${targetBranch}</b> → <b>${cur}</b> 时，${conflicts.length} 层发生冲突（红框标出）：</p>
+    <p>合并 <b>${sourceBranch}</b> → <b>${cur}</b> 时，${conflicts.length} 层发生冲突（红框标出）：</p>
     <div class="recipe-compare">
       <div class="side">
-        <div class="side-label">小蓝的 (${cur})</div>
+        <div class="side-label">当前分支 (${cur})</div>
         <div class="sandwich-preview">${oursHtml}</div>
       </div>
       <div class="side">
-        <div class="side-label">小红的 (${targetBranch})</div>
+        <div class="side-label">来源分支 (${sourceBranch})</div>
         <div class="sandwich-preview">${theirsHtml}</div>
       </div>
     </div>
     <div class="dialog-btns" style="flex-direction:column;align-items:stretch;">
-      <button class="btn" onclick="resolveMergeRecipe('mine')">保留小蓝的</button>
-      <button class="btn" onclick="resolveMergeRecipe('theirs')">保留小红的</button>
+      <button class="btn" onclick="resolveMergeRecipe('mine')">保留当前分支 (${cur})</button>
+      <button class="btn" onclick="resolveMergeRecipe('theirs')">保留来源分支 (${sourceBranch})</button>
       <button class="btn active" onclick="resolveMergeRecipe('both')">合并两者</button>
     </div>`;
   ov.classList.add('show');
 }
 
 function resolveMergeRecipe(strategy) {
-  const targetBranch = window._mergeConflictTarget;
+  const sourceBranch = window._mergeConflictSource;
   const info = window._mergeConflictInfo;
   const repo = getChef().repo;
   let recipe;
@@ -3640,11 +3777,11 @@ function resolveMergeRecipe(strategy) {
       recipe.splice(c.index, 1, ...both);
     }
   }
-  repo.mergeWithRecipe(targetBranch, recipe);
+  repo.mergeWithRecipe(sourceBranch, recipe, getChef().author);
   resetWorkingRecipe();
   closeDialog();
   render();
-  const labels = { mine: '保留小蓝的配方', theirs: '保留小红的配方', both: '合并两者' };
+  const labels = { mine: '保留当前分支', theirs: '保留来源分支', both: '合并两者' };
   toast(`配方冲突已解决: ${labels[strategy]}`);
   unlockAchievement('first_merge');
 }
@@ -3884,7 +4021,7 @@ function doMergePR(prId) {
       repo.checkout(targetBranch);
     }
     // 同步远端最新状态并拉取到本地（PR 合并后本地 main 应跟进）
-    sys.pull(repo, getChef().name);
+    sys.pull(repo, getChef().author);
     // 强制清理源分支（无论 prune 是否生效）
     repo.remoteRefs.delete('origin/' + sourceBranch);
     if (repo.branches.has(sourceBranch)) {
@@ -3928,14 +4065,18 @@ function showConflictResolver(prId) {
     conflictRows += `
       <div style="padding:4px 0;margin:6px 0;">
         <div style="font-size:0.7rem;color:var(--text-3);margin-bottom:4px;">第 ${c.index + 1} 层冲突：</div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <label style="flex:1;cursor:pointer;padding:6px;border:1.5px solid var(--border);display:flex;align-items:center;gap:4px;font-size:0.75rem;" id="conflict-${i}-ours">
+        <div style="display:flex;gap:8px;align-items:stretch;">
+          <label style="flex:1;cursor:pointer;padding:8px;border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:4px;font-size:0.75rem;" id="conflict-${i}-ours">
             <input type="radio" name="conflict-${i}" value="ours" onchange="highlightConflictChoice(${i})" checked>
-            <span style="font-weight:600;color:var(--accent);">${pr.target}:</span> ${oursImg}
+            <div style="display:flex;align-items:center;gap:4px;justify-content:center;white-space:nowrap;">
+              <span style="font-weight:600;color:var(--accent);">${pr.target}:</span> ${oursImg}
+            </div>
           </label>
-          <label style="flex:1;cursor:pointer;padding:6px;border:1.5px solid var(--border);display:flex;align-items:center;gap:4px;font-size:0.75rem;" id="conflict-${i}-theirs">
+          <label style="flex:1;cursor:pointer;padding:8px;border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:4px;font-size:0.75rem;" id="conflict-${i}-theirs">
             <input type="radio" name="conflict-${i}" value="theirs" onchange="highlightConflictChoice(${i})">
-            <span style="font-weight:600;color:var(--green);">${pr.source}:</span> ${theirsImg}
+            <div style="display:flex;align-items:center;gap:4px;justify-content:center;white-space:nowrap;">
+              <span style="font-weight:600;color:var(--green);">${pr.source}:</span> ${theirsImg}
+            </div>
           </label>
         </div>
       </div>`;
@@ -4089,7 +4230,15 @@ function doPush() {
 }
 
 function doFetch() {
-  try { const n = sys.fetch(getChef().repo); render(); toast(`远端发现 +${n} 个新存档`); }
+  try {
+    const branchBefore = getChef().repo.currentBranch();
+    const n = sys.fetch(getChef().repo);
+    if (getChef().repo.currentBranch() !== branchBefore) {
+      resetWorkingRecipe();
+    }
+    render();
+    toast(`远端发现 +${n} 个新存档`);
+  }
   catch(e) { toast(e.message, true); }
 }
 
@@ -4132,7 +4281,12 @@ function doSync() {
   }
 
   // 先 fetch 获取远端最新状态，再判断 behind/ahead
+  const branchBeforeSync = getChef().repo.currentBranch();
   sys.fetch(getChef().repo);
+  // fetch 可能因远端分支被删而自动切到 main，需重置工作区
+  if (getChef().repo.currentBranch() !== branchBeforeSync) {
+    resetWorkingRecipe();
+  }
 
   const behind = sys.getBehind(getChef().repo);
   const ahead = sys.getAhead(getChef().repo);
