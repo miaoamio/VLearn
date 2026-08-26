@@ -1483,6 +1483,7 @@ mark.sketch-mark {
 <div class="action-bar">
   <button class="btn" onclick="doCommit()"><span class="btn-zh">存档</span><span class="btn-en">commit</span></button>
   <button class="btn" onclick="doRevert()"><span class="btn-zh">回退</span><span class="btn-en">revert</span></button>
+  <button class="btn" onclick="doClear()"><span class="btn-zh">清空</span><span class="btn-en">clear</span></button>
   <button class="btn" onclick="showBranchDialog(true)"><span class="btn-zh">开分支</span><span class="btn-en">branch</span></button>
   <button class="btn" onclick="showMergeDialog()"><span class="btn-zh">合并</span><span class="btn-en">merge</span></button>
   <button class="btn sync-btn" id="syncBtn" onclick="doSync()"><span class="btn-zh" id="syncZh">同步</span><span class="btn-en" id="syncEn">sync</span></button>
@@ -4065,6 +4066,13 @@ function doRevert() {
   }).join('');
   dl.innerHTML = `<h3>撤销哪个提交？(revert)</h3><p style="font-size:0.72rem;color:#888;">撤销 = 新增一个「反向操作」的存档，历史不变。<b>安全，适合已同步的提交。</b></p><div style="max-height:200px;overflow-y:auto;margin-bottom:0.7rem;">${optHtml}</div><div class="dialog-btns"><button class="btn" onclick="closeDialog()">取消</button></div>`;
   ov.classList.add('show');
+}
+
+function doClear() {
+  if (!requireInit()) return;
+  getChef().workingRecipe = [];
+  render();
+  toast('汉堡已清空');
 }
 
 function confirmRevert(targetId) {
