@@ -1483,9 +1483,9 @@ mark.sketch-mark {
 <div class="action-bar">
   <button class="btn" onclick="doCommit()"><span class="btn-zh">存档</span><span class="btn-en">commit</span></button>
   <button class="btn" onclick="doRevert()"><span class="btn-zh">回退</span><span class="btn-en">revert</span></button>
-  <button class="btn sync-btn" id="syncBtn" onclick="doSync()"><span class="btn-zh" id="syncZh">同步</span><span class="btn-en" id="syncEn">sync</span></button>
   <button class="btn" onclick="showBranchDialog(true)"><span class="btn-zh">开分支</span><span class="btn-en">branch</span></button>
   <button class="btn" onclick="showMergeDialog()"><span class="btn-zh">合并</span><span class="btn-en">merge</span></button>
+  <button class="btn sync-btn" id="syncBtn" onclick="doSync()"><span class="btn-zh" id="syncZh">同步</span><span class="btn-en" id="syncEn">sync</span></button>
   <button class="btn pr-btn" onclick="showPRDialog()"><span class="btn-zh">PR</span><span class="btn-en">pull request</span><span class="pr-badge" id="prBadge" style="display:none;"></span></button>
   <button class="btn publish-btn" onclick="showPublishDialog()"><span class="btn-zh">发布</span><span class="btn-en">deploy</span></button>
 </div>
@@ -2239,8 +2239,13 @@ class GitSystem {
     } else {
       msg = '合并';
       recipe = [...(conflictInfo ? conflictInfo.mergedRecipe : localRecipe)];
-      for (const c of conflicts) {
-        recipe[c.index] = c.ours !== undefined ? c.ours : c.theirs;
+      // 从后往前处理，避免 splice 导致索引偏移
+      const sorted = [...conflicts].sort((a, b) => b.index - a.index);
+      for (const c of sorted) {
+        const both = [];
+        if (c.ours !== undefined) both.push(c.ours);
+        if (c.theirs !== undefined && c.theirs !== c.ours) both.push(c.theirs);
+        recipe.splice(c.index, 1, ...both);
       }
     }
 
@@ -3553,6 +3558,10 @@ function doMerge(targetBranch) {
     // 合并成功后删除源分支（已被合入，不再需要）
     repo.branches.delete(sourceBranch);
     repo.remoteRefs.delete('origin/' + sourceBranch);
+    // 同步删除远端分支，防止 fetch 时重新创建
+    if (sys.remote.branches.has(sourceBranch)) {
+      sys.remote.branches.delete(sourceBranch);
+    }
     closeDialog();
     resetWorkingRecipe();
     render();
@@ -3622,8 +3631,13 @@ function resolveMergeRecipe(strategy) {
     recipe = [...info.targetRecipe];
   } else {
     recipe = [...info.mergedRecipe];
-    for (const c of info.conflicts) {
-      recipe[c.index] = c.ours !== undefined ? c.ours : c.theirs;
+    // 从后往前处理，避免 splice 导致索引偏移
+    const sorted = [...info.conflicts].sort((a, b) => b.index - a.index);
+    for (const c of sorted) {
+      const both = [];
+      if (c.ours !== undefined) both.push(c.ours);
+      if (c.theirs !== undefined && c.theirs !== c.ours) both.push(c.theirs);
+      recipe.splice(c.index, 1, ...both);
     }
   }
   repo.mergeWithRecipe(targetBranch, recipe);
