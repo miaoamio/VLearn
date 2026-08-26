@@ -1,0 +1,19 @@
+{
+  "nodes": [
+    { "id": "push", "label": "同步推送", "detail": "git push" },
+    { "id": "switch", "label": "切换身份", "detail": "模拟协作者" },
+    { "id": "pull", "label": "同步更新", "detail": "git pull" },
+    { "id": "pr", "label": "PR 评审", "detail": "Pull Request" },
+    { "id": "merge", "label": "合并发布", "detail": "merge to main" },
+    { "id": "revert", "label": "回滚", "detail": "git revert" }
+  ],
+  "edges": [
+    { "from": "push", "to": "switch" },
+    { "from": "switch", "to": "pull" },
+    { "from": "pull", "to": "pr" },
+    { "from": "pr", "to": "merge" },
+    { "from": "merge", "to": "revert" }
+  ],
+  "annotations": [],
+  "groups": []
+}

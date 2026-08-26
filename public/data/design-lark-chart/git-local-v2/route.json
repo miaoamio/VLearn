@@ -1,0 +1,4 @@
+{
+  "route": "dsl",
+  "reason": "milestone chart type uses DSL path per 05-render-dsl.md routing table"
+}

@@ -1,0 +1,8 @@
+{
+    "app_name": "VLearn",
+    "app_description": "面向设计师的 Git 可视化学习工具，支持企业 SSO 访问",
+    "capabilities": [
+        "access_control"
+    ],
+    "datasources": {}
+}

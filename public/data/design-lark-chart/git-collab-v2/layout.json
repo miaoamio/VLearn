@@ -1,0 +1,10 @@
+{
+  "type": "horizontal_timeline",
+  "card_width": 140,
+  "card_height": 120,
+  "gap": 16,
+  "padding": 12,
+  "root_padding": 32,
+  "root_gap": 24,
+  "timeline_padding": 16
+}
