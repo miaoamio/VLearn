@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>今天吃点什么？</title>
+<title>Git 周月的概念厨房</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M15 55h70v8c0 4-3 7-7 7H22c-4 0-7-3-7-7v-8z' fill='%23D2691E'/><rect x='20' y='50' width='60' height='5' rx='2' fill='%2332CD32'/><rect x='18' y='42' width='64' height='10' rx='3' fill='%23CD853F'/><path d='M15 45c0-18 15-30 35-30s35 12 35 30H15z' fill='%23F4A460'/><circle cx='35' cy='35' r='2' fill='%23FFF5E1'/><circle cx='55' cy='30' r='2' fill='%23FFF5E1'/><circle cx='70' cy='38' r='2' fill='%23FFF5E1'/></svg>">
 <style>
 @font-face {
@@ -1474,7 +1474,7 @@ mark.sketch-mark {
 
 <div class="top-container">
 <div class="header">
-  <h1>今天吃点什么？</h1>
+  <h1><span style="font-family: var(--font-hand); font-weight: 900; font-size: 26px; margin-right: 2px; color: var(--text);">Git</span> 周月的概念厨房</h1>
   <div class="header-right">
     <button class="capsule-btn no-border" onclick="showStoreDialog()"><img src="img/shop.webp" style="width:16px;height:18px;object-fit:contain;" alt="">门店</button>
     <button class="capsule-btn" onclick="showAchievementPanel()"><img src="img/honor.webp" style="width:16px;height:18px;object-fit:contain;" alt="">成就 <span class="achievement-progress" id="achProgress"></span></button>
@@ -1553,7 +1553,8 @@ const INGREDIENTS = [
   { id: 'cheese', name: '芝士', img: 'img/cheese.webp' },
   { id: 'patty', name: '牛肉', img: 'img/patty.webp' },
   { id: 'lettuce', name: '生菜', img: 'img/lettuce.webp' },
-  { id: 'tomato', name: '西红柿', img: 'img/tomato.webp' }
+  { id: 'tomato', name: '西红柿', img: 'img/tomato.webp' },
+  { id: 'bacon', name: '培根', img: 'img/bacon.png' }
 ];
 
 // AI 帮厨可能产出的坏食材（AI 幻觉）
@@ -2968,6 +2969,7 @@ function renderSandwichView() {
     layer.title = getIngredientName(recipe[i]);
     layer.style.zIndex = recipe.length - i + 1;
     if (recipe[i] === 'tomato') layer.style.transform = 'scale(1.25)';
+    if (recipe[i] === 'bacon') layer.style.transform = 'scale(1.08)';
     const imgSrc = getIngredientImg(recipe[i]);
     layer.innerHTML = `
       <img class="sprite-img" src="${imgSrc}" alt="${getIngredientName(recipe[i])}">
